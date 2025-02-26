@@ -1,0 +1,13 @@
+version: "1.0"
+linter: jetbrains/qodana-dotnet:2024.2
+profile:
+  name: qodana.recommended
+include:
+  - name: CheckDependencyLicenses
+fixesStrategy: cleanup
+exclude:
+  - name: SuggestVarOrType_SimpleTypes
+  - name: SuggestVarOrType_BuiltInTypes
+  - name: SuggestVarOrType_Elsewhere
+  - name: SuggestVarOrType_DeconstructionDeclarations
+  - name: ReplaceObjectPatternWithVarPattern
