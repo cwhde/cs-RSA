@@ -1,6 +1,6 @@
 ﻿namespace RSA;
 
-class CommandLine
+public static class CommandLine
 {
     static void Main(string[] args)
     {
