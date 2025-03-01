@@ -5,8 +5,14 @@ namespace RSA.commons;
 // Class that holds various utility methods aiding the RSA classes
 public static class RSAUtils
 {
-    //  a public key input of multiple kinds (filepath, PEM or shortened PEM) and returns a formatted PEM string with correct headers
-    public static string sanitizeKeyInput(string input, bool isPublic)
+    // Method that returns an array of allowed padding modes
+    public static string [] AllowedPaddings()
+    {
+        return ["pkcs1", "oaepsha1", "oaepsha256"];
+    }
+    
+    // Method that takes a public key input of multiple kinds (filepath, PEM or shortened PEM) and returns a formatted PEM string with correct headers
+    public static string SanitizeKeyInput(string input, bool isPublic)
     {
         // Determine the header based on whether the key is public or private
         string header = isPublic ? "PUBLIC" : "PRIVATE";

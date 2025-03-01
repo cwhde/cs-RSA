@@ -7,13 +7,13 @@ internal static class CommandLine
     { 
         ReferenceRSA rsa = new ReferenceRSA(); // Using the ReferenceRSA class
         Console.Write("Enter your public key: "); // Get public key as input
-        string publicRSAKey = Console.ReadLine();
+        string publicRSAKey = Console.ReadLine()!;
         Console.WriteLine();
         Console.Write("Enter your message content: "); // Get message content as input
-        string message = Console.ReadLine();
+        string message = Console.ReadLine()!;
         Console.WriteLine();
         Console.WriteLine("Encrypted message is:");
         Console.WriteLine();
-        Console.WriteLine(rsa.EncryptString(publicRSAKey, message)); // Encrypt and output the message
+        Console.WriteLine(rsa.EncryptString(publicRSAKey, "pkcs1", message)); // Encrypt and output the message
     }
 }
