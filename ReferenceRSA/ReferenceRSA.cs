@@ -22,7 +22,7 @@ public class ReferenceRSA : ICommonRSA
         byte [] plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText); // Convert the string to a byte-array
         switch (padding.ToLower())
         {
-            case "pkcsS1":
+            case "pkcs1":
                 plainTextBytes = _refRSA.Encrypt(plainTextBytes, RSAEncryptionPadding.Pkcs1); // Decrypt the bytes using PKCS1 padding
                 break;
             case "oaepsha1":
@@ -49,7 +49,7 @@ public class ReferenceRSA : ICommonRSA
         byte [] plainTextBytes = [0]; // Initialize the byte-array for the decrypted bytes, assign a value to prevent IDE warnings
         switch (padding.ToLower())
         {
-            case "pkcsS1":
+            case "pkcs1":
                 plainTextBytes = _refRSA.Decrypt(encryptedTextBytes, RSAEncryptionPadding.Pkcs1); // Decrypt the bytes using PKCS1 padding
                 break;
             case "oaepsha1":

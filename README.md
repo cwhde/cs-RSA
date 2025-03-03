@@ -5,6 +5,18 @@
 Rewriting my own implementation of RSA in cs in order to learn how it works.
 Part of my Matura-Project examining the implications of Quantum-Computing on modern-day cryptography.
 
+## Features
+* Simple CLI for both the reference and self-implemented version
+* Self-implemented RSA with PKCS1 Padding for both encryption and decryption
+* Parsing of keys of multiple formats (X509 String, PEM File contents, PEM File)
+
+## Planned Features
+* Support for OaepSHA1 and OaepSHA256 Padding
+* Reference and self-implemented version of key generation
+* Cleaner and more feature-rich CLI
+* Code coverage and testing
+* Cleaned up code and comments
+
 ## Double-Checking Config
-You can use [devglan.com](https://www.devglan.com/online-tools/rsa-encryption-decryption) to double-check results with
-the padding set to RSA/ECB/PKCS1Padding
+You can use either the ReferenceRSA project to double-check results.
+You can also use [devglan.com](https://www.devglan.com/online-tools/rsa-encryption-decryption) for double-checking as well as generating keys.
