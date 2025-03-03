@@ -17,6 +17,11 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 * Code coverage and testing
 * Cleaned up code and comments
 
+## More information on how it works
+* [CrypTool](https://www.cryptool.org/en/cto/rsa-step-by-step/) explanation of what RSA does step-by-step (Key Generation + Encryption + Decryption)
+* [Demystifying the RSA Algorithm: An Intuitive Introduction for Novices in Cybersecurity (arXiv)](https://arxiv.org/abs/2308.02785) detailed document that explains RSA and what makes it work including all concepts from the  basic math to the actual algorithm
+* [Devglan.com](https://www.devglan.com/online-tools/rsa-encryption-decryption) for experimenting, checking and generating keys
+
 ## Double-Checking Config
 You can use either the ReferenceRSA project to double-check results.
 You can also use [devglan.com](https://www.devglan.com/online-tools/rsa-encryption-decryption) for double-checking as well as generating keys.
