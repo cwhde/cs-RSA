@@ -1,4 +1,5 @@
 ﻿using RSA.commons;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 
 namespace RSA.CLI;
 
@@ -19,8 +20,8 @@ static class CommandLine
             Console.Write($"Enter the desired padding mode ({string.Join(", ", validPaddingModes)}): ");
             try
             {
-                paddingMode = Console.ReadLine().ToLower() ?? throw new InvalidOperationException();
-                if (!validPaddingModes.Contains(paddingMode)) throw new InvalidOperationException();
+                paddingMode = Console.ReadLine();
+                if (paddingMode == null || !validPaddingModes.Contains(paddingMode.ToLower())) throw new InvalidOperationException();
                 break;
             }      
             catch
