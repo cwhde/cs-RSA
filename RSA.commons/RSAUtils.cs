@@ -5,7 +5,7 @@ namespace RSA.commons;
 public static class RSAUtils
 {
     // Method that returns an array of valid padding modes
-    public static string [] ValidPaddings()
+    public static string [] GetValidPaddings()
     {
         return ["pkcs1", "oaepsha1", "oaepsha256"];
     }

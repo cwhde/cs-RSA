@@ -6,14 +6,14 @@ Rewriting my own implementation of RSA in cs in order to learn how it works.
 Part of my Matura-Project examining the implications of Quantum-Computing on modern-day cryptography.
 
 ## Features
-* Simple CLI for both the reference and self-implemented version
 * Self-implemented RSA with PKCS1 Padding for both encryption and decryption
 * Parsing of keys of multiple formats (X509 String, PEM File contents, PEM File)
+* Simple CLI for encrypting and decrypting messages and seeing whether it works
 
 ## Planned Features
 * Support for OaepSHA1 and OaepSHA256 Padding
 * Reference and self-implemented version of key generation
-* Cleaner and more feature-rich CLI
+* Clean and feature-rich CLI
 * Code coverage and testing
 
 ## More information on how it works

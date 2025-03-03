@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSA", "RSA\RSA.csproj", "{6
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSA.commons", "RSA.commons\RSA.commons.csproj", "{DE6F90E0-3646-468F-98BA-1BF00D1270B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSA.CLI", "RSA.CLI\RSA.CLI.csproj", "{62A91CC7-4674-40A3-BA25-D7E0FC10313C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{DE6F90E0-3646-468F-98BA-1BF00D1270B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE6F90E0-3646-468F-98BA-1BF00D1270B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE6F90E0-3646-468F-98BA-1BF00D1270B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62A91CC7-4674-40A3-BA25-D7E0FC10313C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62A91CC7-4674-40A3-BA25-D7E0FC10313C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62A91CC7-4674-40A3-BA25-D7E0FC10313C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62A91CC7-4674-40A3-BA25-D7E0FC10313C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

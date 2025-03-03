@@ -12,7 +12,7 @@ public class ReferenceRSA : ICommonRSA
     public string EncryptString(string publicKey, string paddingMode, string plainText)
     {
         // Check if padding is valid
-        string[] validPaddings = RSAUtils.ValidPaddings();
+        string[] validPaddings = RSAUtils.GetValidPaddings();
         if (!validPaddings.Contains(paddingMode.ToLower()))
         {
             throw new ArgumentException("Padding mode invalid", nameof(paddingMode)); // Throw an exception if the padding is not allowed
@@ -43,7 +43,7 @@ public class ReferenceRSA : ICommonRSA
     public string DecryptString(string privateKey, string paddingMode, string cipherText)
     {
         // Check if padding is valid
-        string[] validPaddings = RSAUtils.ValidPaddings();
+        string[] validPaddings = RSAUtils.GetValidPaddings();
         if (!validPaddings.Contains(paddingMode.ToLower()))
         {
             throw new ArgumentException("Padding mode not allowed", nameof(paddingMode));
