@@ -15,7 +15,6 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 * Reference and self-implemented version of key generation
 * Cleaner and more feature-rich CLI
 * Code coverage and testing
-* Cleaned up code and comments
 
 ## More information on how it works
 * [CrypTool](https://www.cryptool.org/en/cto/rsa-step-by-step/) explanation of what RSA does step-by-step (Key Generation + Encryption + Decryption)

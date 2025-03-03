@@ -1,29 +1,28 @@
-﻿using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace RSA;
+﻿namespace RSA;
 
 public static class CommandLine
 {
     static void Main()
     { 
-        RSA rsa = new RSA();    // Using the ReferenceRSA class
-        Console.Write("Enter your public key: "); // Get public key as input
-        string publicRSAKey = Console.ReadLine()!;
+        // Check RSA implementation with user input
+        // ReSharper disable once InconsistentNaming
+        RSA RSA = new RSA();                        // Reference Implementation
+        Console.Write("Enter your public key: ");
+        string publicKey = Console.ReadLine()!;     // Don't handle null input
         Console.WriteLine();
+        
         Console.Write("Enter your private key: ");
-        string privateRSAKey = Console.ReadLine()!;
+        string privateKey = Console.ReadLine()!;
         Console.WriteLine();
-        Console.Write("Enter your message content: "); // Get message content as input
+        
+        Console.Write("Enter your message content: ");
         string message = Console.ReadLine()!;
         Console.WriteLine();
-        Console.WriteLine("Encrypted message is:");
-        Console.WriteLine();
-        Console.WriteLine(rsa.EncryptString(publicRSAKey, "pkcs1", message)); // Encrypt and output the message
-        Console.WriteLine();
-        Console.WriteLine("Decrypted message is:");
-        Console.WriteLine();
-        Console.WriteLine(rsa.DecryptString(privateRSAKey, "pkcs1", rsa.EncryptString(publicRSAKey, "pkcs1", message))); // Decrypt and output the message
+
+        string encryptedMessage = RSA.EncryptString(publicKey: publicKey, paddingMode: "pkcs1", plainText: message);
+        Console.WriteLine($"Encrypted message is:\n{encryptedMessage}\n");
+
+        string decryptedMessage = RSA.DecryptString(privateKey: privateKey, paddingMode: "pkcs1", cipherText: encryptedMessage);
+        Console.WriteLine($"Decrypted message is:\n{decryptedMessage}\n");
     }
 }

@@ -3,6 +3,6 @@ namespace RSA.commons;
 // Interface to ensure uniformity and similar access between the reference and the self-written RSA classes
 public interface ICommonRSA
 {
-    string EncryptString(string pubKey, string padding, string plainText);
-    string DecryptString(string privKey, string padding, string cipherText);
+    string EncryptString(string publicKey, string paddingMode, string plainText);
+    string DecryptString(string privateKey, string paddingMode, string cipherText);
 }

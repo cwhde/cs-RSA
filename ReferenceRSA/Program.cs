@@ -1,19 +1,28 @@
 ﻿namespace ReferenceRSA;
 
-// Class that holds the command line interface
 internal static class CommandLine
 {
     static void Main()
     { 
-        ReferenceRSA rsa = new ReferenceRSA(); // Using the ReferenceRSA class
-        Console.Write("Enter your public key: "); // Get public key as input
-        string publicRSAKey = Console.ReadLine()!;
+        // Check RSA implementation with user input
+        // ReSharper disable once InconsistentNaming
+        ReferenceRSA RSA = new ReferenceRSA();      // Reference Implementation
+        Console.Write("Enter your public key: ");
+        string publicKey = Console.ReadLine()!;     // Don't handle null input
         Console.WriteLine();
-        Console.Write("Enter your message content: "); // Get message content as input
+        
+        Console.Write("Enter your private key: ");
+        string privateKey = Console.ReadLine()!;
+        Console.WriteLine();
+        
+        Console.Write("Enter your message content: ");
         string message = Console.ReadLine()!;
         Console.WriteLine();
-        Console.WriteLine("Encrypted message is:");
-        Console.WriteLine();
-        Console.WriteLine(rsa.EncryptString(publicRSAKey, "pkcs1", message)); // Encrypt and output the message
+
+        string encryptedMessage = RSA.EncryptString(publicKey: publicKey, paddingMode: "pkcs1", plainText: message);
+        Console.WriteLine($"Encrypted message is:\n{encryptedMessage}\n");
+
+        string decryptedMessage = RSA.DecryptString(privateKey: privateKey, paddingMode: "pkcs1", cipherText: encryptedMessage);
+        Console.WriteLine($"Decrypted message is:\n{decryptedMessage}\n");
     }
 }
