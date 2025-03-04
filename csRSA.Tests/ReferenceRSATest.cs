@@ -68,14 +68,54 @@ public class ReferenceRSATest
     }
     
     [TestMethod]
-    // Pass if the complete flow of generating keys, encrypting and decrypting a string works without error and the decrypted text is the same as the original text
-    public void TestCompleteFlow()
+    // Check if the encryption method correctly throws an exception given an invalid padding scheme
+    public void EncryptString_ShouldThrowExceptionWithInvalidPadding()
+    {
+        Assert.ThrowsException<ArgumentException>(() => _referenceRSA.EncryptString("value", "invalidPadding", "value"));
+    }
+    
+    [TestMethod]
+    // Check if the decryption method correctly throws an exception given an invalid padding scheme
+    public void DecryptString_ShouldThrowExceptionWithInvalidPadding()
+    {
+        Assert.ThrowsException<ArgumentException>(() => _referenceRSA.DecryptString("value", "invalidPadding", "value"));
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with pkcs1 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowPKCS1()
     {
         (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
-        string plainText = "About 256 bytes or 2048 bits of text length should matter no problem, maybe leaving at least 11 bytes for pkcs1 padding leaving 245 bytes for the text. This text doesn't reach that, but surpasses 1024 bits.";
+        string plainText = "About 256 bytes or 2048 bits of text length should cause no problem, maybe leaving at least 11 bytes for pkcs1 padding leaving 245 bytes for the text. This text doesn't reach that, but surpasses 1024 bits.";
 
         string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
         string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with oaepsha1 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowOAEPSha1()
+    {
+        (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
+        string plainText = "OAEP with SHA1 has more padding, meaning i can't copy-paste the string from the PKCS1 test interestingly enough.";
+
+        string encryptedText = _referenceRSA.EncryptString(publicKey, "oaepsha1", plainText);
+        string decryptedText = _referenceRSA.DecryptString(privateKey, "oaepsha1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with oaepsha256 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowOAEPSha256()
+    {
+        (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
+        string plainText = "It seems OAEP with SHA256 has even more padding, meaning i can't copy-paste the string from the OAEP Sha1 test.";
+
+        string encryptedText = _referenceRSA.EncryptString(publicKey, "oaepsha256", plainText);
+        string decryptedText = _referenceRSA.DecryptString(privateKey, "oaepsha256", encryptedText);
         
         Assert.AreEqual(plainText, decryptedText);
     }

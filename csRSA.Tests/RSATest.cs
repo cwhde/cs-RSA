@@ -9,7 +9,7 @@ namespace csRSA.Tests;
 [TestSubject(typeof(RSA.RSA))]
 public class RSATest
 {
-    private readonly RSA.RSA _referenceRSA = new RSA.RSA();
+    private readonly RSA.RSA _selfImplementedRSA = new RSA.RSA();
 
     [TestMethod]
     // Pass if generating keys and then using them doesn't throw an error and the decrypted text is the same as the original text
@@ -20,10 +20,10 @@ public class RSATest
         
         foreach (int keySize in keySizes)
         {
-            (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(keySize);
+            (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(keySize);
             
-            string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", text);
-            string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+            string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "pkcs1", text);
+            string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "pkcs1", encryptedText);
             Assert.AreEqual(text, decryptedText);
         }
     }
@@ -41,7 +41,7 @@ public class RSATest
         
         foreach (string publicKey in new[] {knownPublicKey, strippedPublicKey, tempFilePath})        
         {
-            string cipherText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
+            string cipherText = _selfImplementedRSA.EncryptString(publicKey, "pkcs1", plainText);
             byte[] encryptedBytes = Convert.FromBase64String(cipherText);
             Assert.AreEqual(256, encryptedBytes.Length);
         }
@@ -61,21 +61,35 @@ public class RSATest
         
         foreach (string privateKey in new[] {knownPrivateKey, strippedPrivateKey, tempFilePath})
         {
-            string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", cipherText);
+            string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "pkcs1", cipherText);
             
             Assert.AreEqual(expectedPlainText, decryptedText);
         }
     }
     
     [TestMethod]
+    // Check if the encryption method correctly throws an exception given an invalid padding scheme
+    public void EncryptString_ShouldThrowExceptionWithInvalidPadding()
+    {
+        Assert.ThrowsException<ArgumentException>(() => _selfImplementedRSA.EncryptString("value", "invalidPadding", "value"));
+    }
+    
+    [TestMethod]
+    // Check if the decryption method correctly throws an exception given an invalid padding scheme
+    public void DecryptString_ShouldThrowExceptionWithInvalidPadding()
+    {
+        Assert.ThrowsException<ArgumentException>(() => _selfImplementedRSA.DecryptString("value", "invalidPadding", "value"));
+    }
+    
+    [TestMethod]
     // Pass if the complete flow of generating keys, encrypting and decrypting a string works without error and the decrypted text is the same as the original text
     public void TestCompleteFlow()
     {
-        (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
         string plainText = "About 256 bytes or 2048 bits of text length should matter no problem, maybe leaving at least 11 bytes for pkcs1 padding leaving 245 bytes for the text. This text doesn't reach that, but surpasses 1024 bits.";
 
-        string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
-        string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "pkcs1", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "pkcs1", encryptedText);
         
         Assert.AreEqual(plainText, decryptedText);
     }
@@ -85,11 +99,11 @@ public class RSATest
     // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size works without error and the decrypted text is the same as the original text, proving chunking works
     public void TestCompleteFlowWithLongText()
     {
-        (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
         string plainText = "This long text, longer than 2048 bit (equal to 256 bytes when because 2048bit/8bitperbyte), is here to test if my own implementation can properly chunk too long text, in this case reached above (256bytes - 11 padding bytes) 245  bytes of encrypted content.";
         
-        string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
-        string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "pkcs1", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "pkcs1", encryptedText);
         
         Assert.AreEqual(plainText, decryptedText);
     }

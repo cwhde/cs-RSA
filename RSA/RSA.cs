@@ -179,11 +179,6 @@ public class RSA : ICommonRSA
                 Array.Copy(sourceArray: encryptedBytes, sourceIndex: 0, destinationArray: paddedEncryptedBytes, destinationIndex: (chunkSize - encryptedBytes.Length), length: encryptedBytes.Length);
                 encryptedBytes = paddedEncryptedBytes;
             }
-            else if (encryptedBytes.Length > chunkSize)
-            {
-                // Trim any excess bytes (should not happen with proper RSA)
-                encryptedBytes = encryptedBytes.Skip(encryptedBytes.Length - chunkSize).ToArray();
-            }
             
             encryptedChunks.Add(encryptedBytes);
         }
