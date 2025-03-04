@@ -75,8 +75,8 @@ public class ReferenceRSA : ICommonRSA
     {
         _referenceRSA.KeySize = keySize;
         System.Security.Cryptography.RSA RSAKeyInstance = System.Security.Cryptography.RSA.Create(keySizeInBits: keySize);
-        string publicKey = RSAKeyInstance.ExportRSAPublicKeyPem();
-        string privateKey = RSAKeyInstance.ExportRSAPrivateKeyPem();
+        string publicKey = RSAKeyInstance.ExportSubjectPublicKeyInfoPem();
+        string privateKey = RSAKeyInstance.ExportPkcs8PrivateKeyPem();
         return (publicKey, privateKey);
     }
 }

@@ -14,33 +14,37 @@ public static class RSAUtils
     public static string SanitizeKeyInput(string inputKey, bool isPublic)
     {
         // Create header based on type
-        string header = isPublic ? "PUBLIC" : "PRIVATE";
-        string pemHeader = $"-----BEGIN {header} KEY-----";
-        string pemFooter = $"-----END {header} KEY-----";
-        
-        // Check if it could be a filepath and return the file's contents if so
-        if (File.Exists(inputKey)) return File.ReadAllText(inputKey);
-        
-        // Check if the input, which is not a file, mismatches RSA PEM format and format it accordingly
-        else if (!inputKey.Contains(pemHeader))
+        string headerType = isPublic ? "PUBLIC KEY" : "PRIVATE KEY";
+        string pemHeader = $"-----BEGIN {headerType}-----";
+        string pemFooter = $"-----END {headerType}-----";
+
+        // Check if it could be a filepath and read the file's contents as key if so
+        if (File.Exists(inputKey)) inputKey = File.ReadAllText(inputKey);
+
+        // Always normalize the key by removing existing headers and formatting
+        string normalizedKey = inputKey
+            .Replace("-----BEGIN PUBLIC KEY-----", "")
+            .Replace("-----END PUBLIC KEY-----", "")
+            .Replace("-----BEGIN RSA PRIVATE KEY-----", "")
+            .Replace("-----END RSA PRIVATE KEY-----", "")
+            .Replace("-----BEGIN PRIVATE KEY-----", "")
+            .Replace("-----END PRIVATE KEY-----", "")
+            .Replace("\n", "")
+            .Replace("\r", "")
+            .Trim();
+
+        // Format with correct headers
+        StringBuilder formattedKey = new StringBuilder();
+        formattedKey.AppendLine(pemHeader);
+
+        // Restrict lines to 64 characters as per the PEM format
+        for (int i = 0; i < normalizedKey.Length; i += 64)
         {
-            inputKey = inputKey.Replace("\n", "").Replace("\r", "");
-
-            StringBuilder formattedKey = new StringBuilder();
-            formattedKey.AppendLine(pemHeader);
-            
-            // Restrict lines to 64 characters as per the PEM format
-            for (int i = 0; i < inputKey.Length; i += 64)
-            {
-                formattedKey.AppendLine(inputKey.Substring(i, Math.Min(64, inputKey.Length - i)));
-            }
-
-            formattedKey.AppendLine(pemFooter);
-            
-            return formattedKey.ToString();
+            formattedKey.AppendLine(normalizedKey.Substring(i, Math.Min(64, normalizedKey.Length - i)));
         }
-        
-        // If it's neither a file nor a misformatted key we can't do anything with it and assume it is a correct PEM key
-        else return inputKey;
+
+        formattedKey.AppendLine(pemFooter);
+
+        return formattedKey.ToString();
     }
 }
