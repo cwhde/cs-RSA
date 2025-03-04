@@ -71,14 +71,14 @@ public class RSATest
     // Check if the encryption method correctly throws an exception given an invalid padding scheme
     public void EncryptString_ShouldThrowExceptionWithInvalidPadding()
     {
-        Assert.ThrowsException<ArgumentException>(() => _selfImplementedRSA.EncryptString("value", "invalidPadding", "value"));
+        Assert.ThrowsExactly<ArgumentException>(() => _selfImplementedRSA.EncryptString("value", "invalidPadding", "value"));
     }
     
     [TestMethod]
     // Check if the decryption method correctly throws an exception given an invalid padding scheme
     public void DecryptString_ShouldThrowExceptionWithInvalidPadding()
     {
-        Assert.ThrowsException<ArgumentException>(() => _selfImplementedRSA.DecryptString("value", "invalidPadding", "value"));
+        Assert.ThrowsExactly<ArgumentException>(() => _selfImplementedRSA.DecryptString("value", "invalidPadding", "value"), "Padding mode invalid");
     }
     
     [TestMethod]
