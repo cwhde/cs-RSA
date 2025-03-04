@@ -23,7 +23,7 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 
 ## Double-Checking Results
 You can use either the ReferenceRSA project to double-check results.
-You can also use [devglan.com](https://www.devglan.com/online-tools/rsa-encryption-decryption) for double-checking as well as generating keys.
+You can also use [AnyCrypt](https://anycript.com/crypto/rsa) for double-checking as well as generating keys.
 
 ## Additional notes
 * Big Endian is used for all operations as this is the standard in RSA and makes it compatible with other implementations
