@@ -13,8 +13,15 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 
 ## Planned Features
 * Support for OaepSHA1 and OaepSHA256 Padding
-* Clean and feature-rich CLI
+* Clean and feature-rich CLI with corrections and specifications
 * Code coverage and testing
+
+## Projects in solution
+* **RSA.CLI:** Command line interface as example of the implementations actually working and as implemented way of accessing the functionality
+* **RSA.commons:** Holds an interface for the implemenations as well as a few utilities in the RSA.Utils class to be used across both implementations
+* **RSA:** My own implementation of RSA and RSA key generation and all needed additional methods
+* **ReferenceRSA:** Implementaiton of RSA and RSA key generation using System.Security.Cryptography
+* **csRSA.Tests:** Holds all unit tests
 
 ## More information on how it works
 * [CrypTool](https://www.cryptool.org/en/cto/rsa-step-by-step/) explanation of what RSA does step-by-step (Key Generation + Encryption + Decryption)
