@@ -12,7 +12,7 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 
 ## Planned Features
 * Support for OaepSHA1 and OaepSHA256 Padding
-* Reference and self-implemented version of key generation
+* Actually working self-implemented key generation (currently giving errors, no time to fix)
 * Clean and feature-rich CLI
 * Code coverage and testing
 

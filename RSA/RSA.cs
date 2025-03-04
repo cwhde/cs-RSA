@@ -72,45 +72,87 @@ public class RSA : ICommonRSA
         BigInteger privateExponent = EuclideanInverseModulo(a: publicExponent, b: smallTotient);
         
         // Create the public key (ASN.1 DER-encoded to Base64 to PEM)
-        byte[] publicModulusBytes = modulus.ToByteArray(isUnsigned: true, isBigEndian: true);
-        byte[] publicExponentBytes = publicExponent.ToByteArray(isUnsigned: true, isBigEndian: true);
         
+        // Write the public key octets
         AsnWriter publicKeyWriter = new AsnWriter(AsnEncodingRules.DER);
         // RSAPublicKey ::= SEQUENCE {
         //     modulus         INTEGER,
         //     publicExponent  INTEGER
         // }
         publicKeyWriter.PushSequence();
-        publicKeyWriter.WriteInteger(publicModulusBytes);
-        publicKeyWriter.WriteInteger(publicExponentBytes);
+        publicKeyWriter.WriteInteger(modulus);
+        publicKeyWriter.WriteInteger(publicExponent);
         publicKeyWriter.PopSequence();
-        
         byte[] publicKeyBytes = publicKeyWriter.Encode();
-        string publicKeyString = Convert.ToBase64String(publicKeyBytes);
+        
+        // Now wrap it in a PublicKeyInfo structure
+        AsnWriter publicKeyInfoWriter = new AsnWriter(AsnEncodingRules.DER);
+        // PublicKeyInfo ::= SEQUENCE {
+        //     algorithm       AlgorithmIdentifier,
+        //     publicKey       BIT STRING
+        // }
+        publicKeyInfoWriter.PushSequence();
+        publicKeyInfoWriter.PushSequence();
+        publicKeyInfoWriter.WriteObjectIdentifier("1.2.840.113549.1.1.1"); // Algorithm identifier for RSA Encryption is 1.2.840.113549.1.1.1
+        publicKeyInfoWriter.WriteNull();
+        publicKeyInfoWriter.PopSequence();
+        publicKeyInfoWriter.WriteBitString(publicKeyBytes); // Public key as BIT STRING
+        publicKeyInfoWriter.PopSequence();
+        byte[] publicKeyInfoBytes = publicKeyInfoWriter.Encode();
+        
+        string publicKeyString = Convert.ToBase64String(publicKeyInfoBytes);
         string publicKey = $"-----BEGIN PUBLIC KEY-----\n{publicKeyString}\n-----END PUBLIC KEY-----";
         
         // Create the private key (ASN.1 DER-encoded to Base64 to PEM)
-        byte[] privateModulusBytes = modulus.ToByteArray(isUnsigned: true, isBigEndian: true);
-        byte[] privateExponentBytes = privateExponent.ToByteArray(isUnsigned: true, isBigEndian: true);
+        BigInteger exponent1 = privateExponent % (randomPrime1 - 1);
+        BigInteger exponent2 = privateExponent % (randomPrime2 - 1);
+        BigInteger coefficient = EuclideanInverseModulo(a: randomPrime2, b: randomPrime1);
         
+        // Write the private key octets
         AsnWriter privateKeyWriter = new AsnWriter(AsnEncodingRules.DER);
         // RSAPrivateKey ::= SEQUENCE {
         //     version           INTEGER,
         //     modulus           INTEGER,
         //     publicExponent    INTEGER,
         //     privateExponent   INTEGER,
-        //     ...other parameters...
+        //     prime1            INTEGER,
+        //     prime2            INTEGER,
+        //     exponent1         INTEGER,
+        //     exponent2         INTEGER,
+        //     coefficient       INTEGER
         // }
         privateKeyWriter.PushSequence();
         privateKeyWriter.WriteInteger(0);
-        privateKeyWriter.WriteInteger(privateModulusBytes);
-        privateKeyWriter.WriteInteger(publicExponentBytes);
-        privateKeyWriter.WriteInteger(privateExponentBytes);
+        privateKeyWriter.WriteInteger(modulus);
+        privateKeyWriter.WriteInteger(publicExponent);
+        privateKeyWriter.WriteInteger(privateExponent);
+        privateKeyWriter.WriteInteger(randomPrime1);
+        privateKeyWriter.WriteInteger(randomPrime2);
+        privateKeyWriter.WriteInteger(exponent1);
+        privateKeyWriter.WriteInteger(exponent2);
+        privateKeyWriter.WriteInteger(coefficient);
         privateKeyWriter.PopSequence();
-        
         byte[] privateKeyBytes = privateKeyWriter.Encode();
-        string privateKeyString = Convert.ToBase64String(privateKeyBytes);
-        string privateKey = $"-----BEGIN RSA PRIVATE KEY-----\n{privateKeyString}\n-----END RSA PRIVATE KEY-----";
+        
+        // Now wrap it in a PrivateKeyInfo structure
+        AsnWriter privateKeyInfoWriter = new AsnWriter(AsnEncodingRules.DER);
+        // PrivateKeyInfo ::= SEQUENCE {
+        //     version             INTEGER,
+        //     algorithm           AlgorithmIdentifier,
+        //     privateKey          OCTET STRING
+        // }
+        privateKeyInfoWriter.PushSequence();
+        privateKeyInfoWriter.WriteInteger(0);                   
+        privateKeyInfoWriter.PushSequence();
+        privateKeyInfoWriter.WriteObjectIdentifier("1.2.840.113549.1.1.1"); // Algorithm identifier for RSA Encryption is 1.2.840.113549.1.1.1
+        privateKeyInfoWriter.WriteNull();
+        privateKeyInfoWriter.PopSequence();
+        privateKeyInfoWriter.WriteOctetString(privateKeyBytes); // RSA private key as OCTET STRING
+        privateKeyInfoWriter.PopSequence();
+        byte[] privateKeyInfoBytes = privateKeyInfoWriter.Encode();
+        
+        string privateKeyString = Convert.ToBase64String(privateKeyInfoBytes);
+        string privateKey = $"-----BEGIN PRIVATE KEY-----\n{privateKeyString}\n-----END PRIVATE KEY-----";
         
         return (publicKey, privateKey);
     }
@@ -332,8 +374,8 @@ public class RSA : ICommonRSA
     private static (BigInteger modulus, BigInteger privateExponent, int keySize) ParsePrivateKey(string privateKey)
     {
         // Clean the private key and remove the PEM header, footer and whitespace
-        string pem = privateKey.Replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                               .Replace("-----END RSA PRIVATE KEY-----", "")
+        string pem = privateKey.Replace("-----BEGIN PRIVATE KEY-----", "")
+                               .Replace("-----END PRIVATE KEY-----", "")
                                .Replace("\n", "")
                                .Replace("\r", "")
                                .Replace(" ", "");
@@ -391,7 +433,7 @@ public class RSA : ICommonRSA
     {
         SecureRandom secureRandom = new SecureRandom();
         Org.BouncyCastle.Math.BigInteger bouncyPrime = Org.BouncyCastle.Math.BigInteger.ProbablePrime(bitLength, secureRandom);
-        return new BigInteger(bouncyPrime.ToByteArrayUnsigned());
+        return new BigInteger(bouncyPrime.ToByteArrayUnsigned(), isUnsigned: true, isBigEndian: true);
     }
 
     // Calculate the Euler Totient function for two prime numbers
