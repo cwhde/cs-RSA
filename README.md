@@ -10,11 +10,12 @@ Part of my Matura-Project examining the implications of Quantum-Computing on mod
 * Parsing of keys of multiple formats (X509 String, PEM File contents, PEM File)
 * Simple CLI for encrypting and decrypting messages and seeing whether it works
 * Generation of PEM keys in X.509/PKCS#8 format (Public and Private)
+* Code analysis with unit testing and coverage
 
 ## Planned Features
 * Support for OaepSHA1 and OaepSHA256 Padding
 * Clean and feature-rich CLI with corrections and specifications
-* Code coverage and testing
+* Interface for implementation unit tests
 
 ## Projects in solution
 * **RSA.CLI:** Command line interface as example of the implementations actually working and as implemented way of accessing the functionality
