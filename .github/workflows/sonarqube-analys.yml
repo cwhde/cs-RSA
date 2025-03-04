@@ -42,7 +42,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"cwhde_cs-RSA" /o:"cwhde" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"cwhde_cs-RSA" /o:"cwhde" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
           dotnet build --no-incremental
           dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
