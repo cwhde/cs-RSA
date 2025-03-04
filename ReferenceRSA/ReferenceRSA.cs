@@ -69,4 +69,14 @@ public class ReferenceRSA : ICommonRSA
         
         return System.Text.Encoding.UTF8.GetString(plainTextBytes);
     }
+    
+    // Method that generates a key pair of the specified size and returns the public and private pem keys as strings
+    public (string publicKey, string privateKey) GenerateKeys(int keySize)
+    {
+        _referenceRSA.KeySize = keySize;
+        System.Security.Cryptography.RSA RSAKeyInstance = System.Security.Cryptography.RSA.Create(keySizeInBits: keySize);
+        string publicKey = RSAKeyInstance.ExportRSAPublicKeyPem();
+        string privateKey = RSAKeyInstance.ExportRSAPrivateKeyPem();
+        return (publicKey, privateKey);
+    }
 }

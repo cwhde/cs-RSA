@@ -5,4 +5,5 @@ public interface ICommonRSA
 {
     string EncryptString(string publicKey, string paddingMode, string plainText);
     string DecryptString(string privateKey, string paddingMode, string cipherText);
+    (string publicKey, string privateKey) GenerateKeys(int keySize);
 }

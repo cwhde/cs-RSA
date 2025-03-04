@@ -1,6 +1,7 @@
 using System.Formats.Asn1;
 using System.Numerics;
 using System.Text;
+using Org.BouncyCastle.Security;
 using RSA.commons; // Own common RSA resources, Interface and Utils
 
 namespace RSA;
@@ -50,6 +51,68 @@ public class RSA : ICommonRSA
         byte[] plainTextBytes = RemovePadding(bytes: paddedTextBytes, keySize: keySize, padding: paddingMode.ToLower());
         
         return Encoding.UTF8.GetString(plainTextBytes);
+    }
+    
+    // Method that generates a pem key pair and returns the public (X.509) and private (PKCS8) key as strings
+    public (string publicKey, string privateKey) GenerateKeys(int keySize)
+    {
+        // Get two random distinct prime numbers
+        BigInteger randomPrime1 = GetRandomPrime(bitLength: keySize / 2);
+        BigInteger randomPrime2 = GetRandomPrime(bitLength: keySize / 2);
+        while (true)
+        {
+            if (randomPrime1 == randomPrime2) randomPrime1 = GetRandomPrime(bitLength: keySize / 2);
+            else break;
+        }
+        
+        BigInteger smallTotient = CarmichaelTotient(p: randomPrime1, q: randomPrime2);
+        BigInteger modulus = BigInteger.Multiply(randomPrime1, randomPrime2);
+        
+        BigInteger publicExponent = new BigInteger(65537); // Is an efficient prime, so gcd(e, totient of modulus) is always 1
+        BigInteger privateExponent = EuclideanInverseModulo(a: publicExponent, b: smallTotient);
+        
+        // Create the public key (ASN.1 DER-encoded to Base64 to PEM)
+        byte[] publicModulusBytes = modulus.ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] publicExponentBytes = publicExponent.ToByteArray(isUnsigned: true, isBigEndian: true);
+        
+        AsnWriter publicKeyWriter = new AsnWriter(AsnEncodingRules.DER);
+        // RSAPublicKey ::= SEQUENCE {
+        //     modulus         INTEGER,
+        //     publicExponent  INTEGER
+        // }
+        publicKeyWriter.PushSequence();
+        publicKeyWriter.WriteInteger(publicModulusBytes);
+        publicKeyWriter.WriteInteger(publicExponentBytes);
+        publicKeyWriter.PopSequence();
+        
+        byte[] publicKeyBytes = publicKeyWriter.Encode();
+        string publicKeyString = Convert.ToBase64String(publicKeyBytes);
+        string publicKey = $"-----BEGIN PUBLIC KEY-----\n{publicKeyString}\n-----END PUBLIC KEY-----";
+        
+        // Create the private key (ASN.1 DER-encoded to Base64 to PEM)
+        byte[] privateModulusBytes = modulus.ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] privateExponentBytes = privateExponent.ToByteArray(isUnsigned: true, isBigEndian: true);
+        
+        AsnWriter privateKeyWriter = new AsnWriter(AsnEncodingRules.DER);
+        // RSAPrivateKey ::= SEQUENCE {
+        //     version           INTEGER,
+        //     modulus           INTEGER,
+        //     publicExponent    INTEGER,
+        //     privateExponent   INTEGER,
+        //     ...other parameters...
+        // }
+        privateKeyWriter.PushSequence();
+        privateKeyWriter.WriteInteger(0);
+        privateKeyWriter.WriteInteger(privateModulusBytes);
+        privateKeyWriter.WriteInteger(publicExponentBytes);
+        privateKeyWriter.WriteInteger(privateExponentBytes);
+        privateKeyWriter.PopSequence();
+        
+        byte[] privateKeyBytes = privateKeyWriter.Encode();
+        string privateKeyString = Convert.ToBase64String(privateKeyBytes);
+        string privateKey = $"-----BEGIN RSA PRIVATE KEY-----\n{privateKeyString}\n-----END RSA PRIVATE KEY-----";
+        
+        return (publicKey, privateKey);
     }
     
     // Method that takes a byte array (padding has to be applied already), a factor n and a factor e and returns the encrypted byte array
@@ -269,8 +332,8 @@ public class RSA : ICommonRSA
     private static (BigInteger modulus, BigInteger privateExponent, int keySize) ParsePrivateKey(string privateKey)
     {
         // Clean the private key and remove the PEM header, footer and whitespace
-        string pem = privateKey.Replace("-----BEGIN PRIVATE KEY-----", "")
-                               .Replace("-----END PRIVATE KEY-----", "")
+        string pem = privateKey.Replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                               .Replace("-----END RSA PRIVATE KEY-----", "")
                                .Replace("\n", "")
                                .Replace("\r", "")
                                .Replace(" ", "");
@@ -321,5 +384,50 @@ public class RSA : ICommonRSA
         int keySize = modulusBytes.Length * 8;
 
         return (modulus, privateExponent, keySize);
+    }
+
+    // Get a random prime number of the specified bit length using BouncyCastle as an own efficient implementation is not feasible
+    private static BigInteger GetRandomPrime(int bitLength)
+    {
+        SecureRandom secureRandom = new SecureRandom();
+        Org.BouncyCastle.Math.BigInteger bouncyPrime = Org.BouncyCastle.Math.BigInteger.ProbablePrime(bitLength, secureRandom);
+        return new BigInteger(bouncyPrime.ToByteArrayUnsigned());
+    }
+
+    // Calculate the Euler Totient function for two prime numbers
+    private static BigInteger CarmichaelTotient(BigInteger p, BigInteger q)
+    {
+        p--;
+        q--;
+        return BigInteger.Multiply(p, q)/BigInteger.GreatestCommonDivisor(p, q);
+    }
+    
+    // Calculate the multiplicative inverse using the Extended Euclidean Algorithm, a will usually be the public exponent (e) and b the Totient (phi(n))
+    private static BigInteger EuclideanInverseModulo(BigInteger a, BigInteger b)
+    {
+        BigInteger oldR = a;
+        BigInteger r = b;
+        BigInteger oldS = 1;
+        BigInteger s = 0;
+        BigInteger oldT = 0;
+        BigInteger t = 1;
+        
+        // Actual algorithm
+        while (r > 0)
+        {
+            BigInteger quotient = oldR / r;
+            
+            (oldR, r) = (r, (oldR - quotient * r));
+            (oldS, s) = (s, oldS - quotient * s);
+            (oldT, t) = (t, oldT - quotient * t);
+        }
+        
+        // OldS can be negative, in which case we add b (phi(n)) to it to get the positive multiplicative inverse
+        while (oldS < 0)
+        {
+            oldS += b;
+        }
+        
+        return oldS;
     }
 }

@@ -14,7 +14,7 @@ public static class RSAUtils
     public static string SanitizeKeyInput(string inputKey, bool isPublic)
     {
         // Create header based on type
-        string header = isPublic ? "PUBLIC" : "PRIVATE";
+        string header = isPublic ? "PUBLIC" : "RSA PRIVATE";
         string pemHeader = $"-----BEGIN {header} KEY-----";
         string pemFooter = $"-----END {header} KEY-----";
         

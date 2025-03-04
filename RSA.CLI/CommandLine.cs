@@ -12,6 +12,10 @@ static class CommandLine
         ReferenceRSA.ReferenceRSA referenceImplementation = new ReferenceRSA.ReferenceRSA();
         RSA selfImplemented = new RSA();
         
+        (string tempPublicKey, string tempPrivateKey) = referenceImplementation.GenerateKeys(keySize: 2048);
+        Console.WriteLine(tempPublicKey);
+        Console.WriteLine(tempPrivateKey);
+        
         // Get padding mode
         string[] validPaddingModes = RSAUtils.GetValidPaddings();
         string paddingMode;
