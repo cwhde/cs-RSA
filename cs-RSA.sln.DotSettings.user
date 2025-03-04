@@ -6,13 +6,7 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=6CD39657_002D12AF_002D456D_002DA7E7_002D65106279F02E/@EntryIndexedValue">ReferenceRSA.Tests</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d027b926_002D8256_002D4fc4_002D8f60_002D601fb40bbfd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::ReferenceRSA.Tests.ReferenceRSATest.GenerateKeys_ShouldNotErrorAndReturnWorkingKeys&lt;/TestId&gt;
-    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::ReferenceRSA.Tests.ReferenceRSATest.EncryptString_ShouldRunWithProvenKeysOfMultipleFormats&lt;/TestId&gt;
-    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::ReferenceRSA.Tests.ReferenceRSATest.DecryptString_ShouldOutputCorrectTextWithProvenKeysOfMultipleFormats&lt;/TestId&gt;
-    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::ReferenceRSA.Tests.ReferenceRSATest.TestCompleteFlow&lt;/TestId&gt;
-    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::ReferenceRSA.Tests.RSATest&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
+  &lt;Solution /&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=oaepsha/@EntryIndexedValue">True</s:Boolean>
 	

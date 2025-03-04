@@ -3,13 +3,13 @@ using System.IO;
 using JetBrains.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ReferenceRSA.Tests;
+namespace csRSA.Tests;
 
 [TestClass]
-[TestSubject(typeof(ReferenceRSA))]
-public class ReferenceRSATest
+[TestSubject(typeof(RSA.RSA))]
+public class RSATest
 {
-    private readonly ReferenceRSA _referenceRSA = new ReferenceRSA();
+    private readonly RSA.RSA _referenceRSA = new RSA.RSA();
 
     [TestMethod]
     // Pass if generating keys and then using them doesn't throw an error and the decrypted text is the same as the original text
@@ -74,6 +74,20 @@ public class ReferenceRSATest
         (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
         string plainText = "About 256 bytes or 2048 bits of text length should matter no problem, maybe leaving at least 11 bytes for pkcs1 padding leaving 245 bytes for the text. This text doesn't reach that, but surpasses 1024 bits.";
 
+        string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
+        string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size works without error and the decrypted text is the same as the original text, proving chunking works
+    public void TestCompleteFlowWithLongText()
+    {
+        (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(2048);
+        string plainText = "This long text, longer than 2048 bit (equal to 256 bytes when because 2048bit/8bitperbyte), is here to test if my own implementation can properly chunk too long text, in this case reached above (256bytes - 11 padding bytes) 245  bytes of encrypted content.";
+        
         string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", plainText);
         string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
         
