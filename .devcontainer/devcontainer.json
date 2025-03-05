@@ -1,6 +1,9 @@
 {
   "name": "C# (.NET 9.0 on Bookworm) Development Environment",
   "image": "mcr.microsoft.com/devcontainers/dotnet:9.0-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
   "customizations": {
     "vscode": {
       "extensions": [
