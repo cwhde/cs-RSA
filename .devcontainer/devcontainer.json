@@ -19,5 +19,5 @@
       }
     }
   },
-  "postCreateCommand": "dotnet restore"
+  "postCreateCommand": "dotnet restore && dotnet build --no-restore"
 }
