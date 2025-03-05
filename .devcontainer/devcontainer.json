@@ -19,5 +19,6 @@
       }
     }
   },
-  "postCreateCommand": "dotnet restore && dotnet build --no-restore"
+  "postCreateCommand": "dotnet restore && dotnet build --no-restore",
+  "postStartCommand": "git pull && dotnet restore && dotnet build --no-restore"
 }
