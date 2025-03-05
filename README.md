@@ -2,8 +2,6 @@
 
 # cs-RSA
 
-[Quality Gate Status [Coverage [Bugs [Code Smells [Duplicated Lines (%)
-
 ## Overview
 
 A custom implementation of RSA encryption in C\# created as part of my Matura-Project on Quantum-Computing's implications for modern cryptography. This project was built to understand RSA's inner workings through hands-on implementation.
