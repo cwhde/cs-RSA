@@ -1,0 +1,23 @@
+{
+  "name": "C# (.NET 9.0 on Bookworm) Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:9.0-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.copilot",
+        "ms-dotnettools.csdevkit",
+        "github.copilot-chat",
+        "eamodio.gitlens",
+        "ahmadawais.shades-of-purple",
+        "sonarsource.sonarlint-vscode"
+      ],
+      "settings": {
+        "workbench.colorTheme": "Shades of Purple"
+      }
+    }
+  },
+  "postCreateCommand": "dotnet restore && dotnet build --no-restore"
+}
