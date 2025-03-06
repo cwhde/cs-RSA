@@ -467,4 +467,23 @@ public class RSA : ICommonRSA
         
         return oldS;
     }
+
+    // Apply MGF1 on a byte array with either SHA1 or SHA256, used for OAEP
+    private static byte[] ApplyMGF1(byte[] seed, int maskLength, bool useSHA1)
+    {
+        throw new NotImplementedException();
+    }
+
+    // XOR two byte arrays, used for OAEP
+    private static byte[] XORBytes(byte[] array1, byte[] array2)
+    {
+        byte[] resultArray = new byte[array1.Length];
+
+        for (int i = 0; i < array1.Length; i++)
+        {
+            resultArray[i] = (byte)(array1[i] ^ array2[i]);
+        }
+
+        return resultArray;
+    }
 }
