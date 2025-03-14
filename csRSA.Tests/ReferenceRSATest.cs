@@ -2,12 +2,13 @@ using System;
 using System.IO;
 using JetBrains.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RSA.commons;
 
 namespace csRSA.Tests;
 
 [TestClass]
 [TestSubject(typeof(ReferenceRSA.ReferenceRSA))]
-public class ReferenceRSATest
+public class ReferenceRSATest : ICommonRSAUnitTest
 {
     private readonly ReferenceRSA.ReferenceRSA _referenceRSA = new ReferenceRSA.ReferenceRSA();
 

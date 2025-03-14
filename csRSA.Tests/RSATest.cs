@@ -2,12 +2,13 @@ using System;
 using System.IO;
 using JetBrains.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RSA.commons;
 
 namespace csRSA.Tests;
 
 [TestClass]
 [TestSubject(typeof(RSA.RSA))]
-public class RSATest
+public class RSATest : ICommonRSAUnitTest
 {
     private readonly RSA.RSA _selfImplementedRSA = new RSA.RSA();
 
@@ -82,8 +83,8 @@ public class RSATest
     }
     
     [TestMethod]
-    // Pass if the complete flow of generating keys, encrypting and decrypting a string works without error and the decrypted text is the same as the original text
-    public void TestCompleteFlow()
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with pkcs1 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowPKCS1()
     {
         (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
         string plainText = "About 256 bytes or 2048 bits of text length should matter no problem, maybe leaving at least 11 bytes for pkcs1 padding leaving 245 bytes for the text. This text doesn't reach that, but surpasses 1024 bits.";
@@ -96,14 +97,66 @@ public class RSATest
     
     
     [TestMethod]
-    // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size works without error and the decrypted text is the same as the original text, proving chunking works
-    public void TestCompleteFlowWithLongText()
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size with pkcs1 works without error and the decrypted text is the same as the original text, proving chunking works
+    public void TestCompleteFlowPKCS1LongText()
     {
         (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
         string plainText = "This long text, longer than 2048 bit (equal to 256 bytes when because 2048bit/8bitperbyte), is here to test if my own implementation can properly chunk too long text, in this case reached above (256bytes - 11 padding bytes) 245  bytes of encrypted content.";
         
         string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "pkcs1", plainText);
         string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with oaepsha1 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowOAEPSha1()
+    {
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
+        string plainText = "OAEP with SHA1 has more padding, meaning i can't copy-paste the string from the PKCS1 test interestingly enough.";
+
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "oaepsha1", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "oaepsha1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size with oaepsha1 works without error and the decrypted text is the same as the original text, proving chunking works
+    public void TestCompleteFlowOAEPSha1LongText()
+    {
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
+        string plainText = "This long text, longer than 2048 bit (equal to 256 bytes when because 2048bit/8bitperbyte), is here to test if my own implementation can properly chunk too long text, in this case reached above (256bytes - 11 padding bytes) 245  bytes of encrypted content.";
+        
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "oaepsha1", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "oaepsha1", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string with oaepsha256 works without error and the decrypted text is the same as the original text
+    public void TestCompleteFlowOAEPSha256()
+    {
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
+        string plainText = "It seems OAEP with SHA256 has even more padding, meaning i can't copy-paste the string from the OAEP Sha1 test.";
+        
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "oaepsha256", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "oaepsha256", encryptedText);
+        
+        Assert.AreEqual(plainText, decryptedText);
+    }
+    
+    [TestMethod]
+    // Pass if the complete flow of generating keys, encrypting and decrypting a string longer than the key size with oaepsha256 works without error and the decrypted text is the same as the original text, proving chunking works
+    public void TestCompleteFlowOAEPSha256LongText()
+    {
+        (string publicKey, string privateKey) = _selfImplementedRSA.GenerateKeys(2048);
+        string plainText = "This long text, longer than 2048 bit (equal to 256 bytes when because 2048bit/8bitperbyte), is here to test if my own implementation can properly chunk too long text, in this case reached above (256bytes - 11 padding bytes) 245  bytes of encrypted content.";
+        
+        string encryptedText = _selfImplementedRSA.EncryptString(publicKey, "oaepsha256", plainText);
+        string decryptedText = _selfImplementedRSA.DecryptString(privateKey, "oaepsha256", encryptedText);
         
         Assert.AreEqual(plainText, decryptedText);
     }

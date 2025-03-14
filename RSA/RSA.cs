@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Formats.Asn1;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using Org.BouncyCastle.Security;
 using RSA.commons; // Own common RSA resources, Interface and Utils
@@ -263,7 +264,7 @@ public class RSA : ICommonRSA
         return paddedBytes;
     }
 
-    private byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256 = false)
+    private byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         int hashLength = useSHA256 ? 32 : 20;
@@ -323,20 +324,14 @@ public class RSA : ICommonRSA
 
         return paddedBytes;
     }
-
-    private static byte[] ApplyOaepSha256Padding(byte[] dataBytes, int keySize)
-    {
-        // Implement OAEP SHA-256 padding logic here
-        throw new NotImplementedException();
-    }
     
     private static byte[] RemovePadding(byte[] dataBytes, int keySize, string padding)
     {
         return padding.ToLower() switch
         {
-            "pkcs1" => RemovePkcs1Padding(dataBytes, keySize),
-            "oaepsha1" => RemoveOaepSha1Padding(dataBytes, keySize),
-            "oaepsha256" => RemoveOaepSha256Padding(dataBytes, keySize),
+            "pkcs1" => RemovePkcs1Padding(dataBytes: dataBytes, keySize: keySize),
+            "oaepsha1" => RemoveOaepPadding(dataBytes: dataBytes, keySize: keySize, useSHA256: false),
+            "oaepsha256" => RemoveOaepPadding(dataBytes: dataBytes, keySize: keySize, useSHA256: true),
             _ => throw new ArgumentException("Unsupported padding type")
         };
     }
@@ -370,14 +365,68 @@ public class RSA : ICommonRSA
         return unpaddedBytes.SelectMany(x => x).ToArray();
     }
 
-    private static byte[] RemoveOaepSha1Padding(byte[] dataBytes, int keySize)
+    private static byte[] RemoveOaepPadding(byte[] dataBytes, int keySize, bool useSHA256)
     {
-        throw new NotImplementedException();
-    }
-
-    private static byte[] RemoveOaepSha256Padding(byte[] dataBytes, int keySize)
-    {
-        throw new NotImplementedException();
+        int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
+        int hashLength = useSHA256 ? 32 : 20;
+        int dbLength = chunkSize - hashLength - 1;
+        int totalChunks = dataBytes.Length / chunkSize;
+        
+        List<byte[]> unpaddedBytes = new List<byte[]>();
+        
+        // Iterate through the data in chunks
+        for (int i = 0; i < totalChunks; i++)
+        {
+            int chunkStartIndex = i * chunkSize;
+            
+            // This is a necessary check part of OAEP specification
+            if (dataBytes[chunkStartIndex] != 0x00)
+            {
+                throw new ArgumentException("Invalid OAEP padding");
+            }
+            
+            // Read the chunks contents (maskedSeed, maskedDB)
+            byte[] maskedSeed = dataBytes.Skip(chunkStartIndex + 1).Take(hashLength).ToArray();
+            byte[] maskedDB = dataBytes.Skip(chunkStartIndex + 1 + hashLength).Take(dbLength).ToArray();
+            
+            // Extract the seed by applying MGF1 to the masked DB and XORing it with the masked seed
+            byte[] seedMask = ApplyMGF1(seed: maskedDB, maskLength: hashLength, useSHA256: useSHA256);
+            byte[] randomSeedBytes = XORBytes(maskedSeed, seedMask);
+            
+            // Extract the DB by applying MGF1 to the seed and XORing it with the masked DB
+            byte[] dbMaskBytes = ApplyMGF1(seed: randomSeedBytes, maskLength: dbLength, useSHA256: useSHA256);
+            byte[] DBBytes = XORBytes(maskedDB, dbMaskBytes);
+            
+            // Check if the label is correct
+            byte[] expectedLabel = useSHA256 ?
+                System.Security.Cryptography.SHA256.HashData(Array.Empty<byte>()) :
+                System.Security.Cryptography.SHA1.HashData(Array.Empty<byte>());
+            byte[] actualLabel = DBBytes.Take(hashLength).ToArray();
+            
+            bool hashesMatch = true;
+            for (int j = 0; j < hashLength; j++)
+            {
+                if (expectedLabel[j] != actualLabel[j])
+                {
+                    hashesMatch = false;
+                    break;
+                }
+            }
+            
+            if (!hashesMatch)
+            {
+                throw new CryptographicException("OAEP padding error: Label mismatch");
+            }
+            
+            // Extract the actual data from DB
+            int delimiterIndex = Array.IndexOf(array: DBBytes, value: (byte)0x01, startIndex: hashLength);
+            byte[] unpaddedChunk = DBBytes.Skip(delimiterIndex + 1).ToArray();
+            
+            // Add to the other chunks
+            unpaddedBytes.Add(unpaddedChunk);
+        }
+        
+        return unpaddedBytes.SelectMany(x => x).ToArray();
     }
     
     private static (BigInteger modulus, BigInteger publicExponent, int keySize) ParsePublicKey(string publicKey)
