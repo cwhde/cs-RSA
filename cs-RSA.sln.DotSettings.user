@@ -5,8 +5,8 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=69E3EC28_002D9C44_002D4220_002DACEE_002D5FE1CF7A4C42/@EntryIndexedValue">E56C5D00-9269-48D3-AC8A-C0CF7FD60592</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=6CD39657_002D12AF_002D456D_002DA7E7_002D65106279F02E/@EntryIndexedValue">ReferenceRSA.Tests</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d027b926_002D8256_002D4fc4_002D8f60_002D601fb40bbfd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Solution /&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d027b926_002D8256_002D4fc4_002D8f60_002D601fb40bbfd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=bitperbyte/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=oaepsha/@EntryIndexedValue">True</s:Boolean>

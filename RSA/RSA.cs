@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Formats.Asn1;
 using System.Numerics;
 using System.Text;
@@ -25,9 +26,9 @@ public class RSA : ICommonRSA
         (BigInteger modulus, BigInteger publicExponent, int keySize) = ParsePublicKey(publicKey: publicKey);
 
         byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
-        byte [] paddedTextBytes = ApplyPadding(bytes: plainTextBytes, keySize: keySize, padding: paddingMode.ToLower());
+        byte [] paddedTextBytes = ApplyPadding(dataBytes: plainTextBytes, keySize: keySize, padding: paddingMode.ToLower());
         
-        byte[] cypherTextBytes = EncryptBytes(bytes: paddedTextBytes, modulus: modulus, publicExponent: publicExponent, keySize: keySize);
+        byte[] cypherTextBytes = EncryptBytes(dataBytes: paddedTextBytes, modulus: modulus, publicExponent: publicExponent, keySize: keySize);
 
         return Convert.ToBase64String(cypherTextBytes);
     }
@@ -46,9 +47,9 @@ public class RSA : ICommonRSA
         (BigInteger modulus, BigInteger privateExponent, int keySize) = ParsePrivateKey(privateKey: privateKey);
         
         byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
-        byte[] paddedTextBytes = DecryptBytes(bytes: cipherTextBytes, modulus: modulus, privateExponent: privateExponent, keySize: keySize);
+        byte[] paddedTextBytes = DecryptBytes(dataBytes: cipherTextBytes, modulus: modulus, privateExponent: privateExponent, keySize: keySize);
 
-        byte[] plainTextBytes = RemovePadding(bytes: paddedTextBytes, keySize: keySize, padding: paddingMode.ToLower());
+        byte[] plainTextBytes = RemovePadding(dataBytes: paddedTextBytes, keySize: keySize, padding: paddingMode.ToLower());
         
         return Encoding.UTF8.GetString(plainTextBytes);
     }
@@ -158,15 +159,15 @@ public class RSA : ICommonRSA
     }
     
     // Method that takes a byte array (padding has to be applied already), a factor n and a factor e and returns the encrypted byte array
-    private static byte[] EncryptBytes(byte[] bytes, BigInteger modulus, BigInteger publicExponent, int keySize)
+    private static byte[] EncryptBytes(byte[] dataBytes, BigInteger modulus, BigInteger publicExponent, int keySize)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         List<byte[]> encryptedChunks = new List<byte[]>();
         
         // Iterate through the data in chunks of blockSize
-        for (int bytesProcessed = 0; bytesProcessed < bytes.Length; bytesProcessed += chunkSize)
+        for (int bytesProcessed = 0; bytesProcessed < dataBytes.Length; bytesProcessed += chunkSize)
         {
-            byte[] currentChunk = bytes.Skip(bytesProcessed).Take(chunkSize).ToArray();
+            byte[] currentChunk = dataBytes.Skip(bytesProcessed).Take(chunkSize).ToArray();
 
             BigInteger currentChunkEndian = new BigInteger(currentChunk, isUnsigned: true, isBigEndian: true); // Big Endian is the default for RSA
             BigInteger encryptedChunk = BigInteger.ModPow(currentChunkEndian, publicExponent, modulus); // Actual way RSA encrypts data (c = m^e mod n)
@@ -187,15 +188,15 @@ public class RSA : ICommonRSA
     }
     
     // Method that takes a byte array, a factor n and a factor d and returns the decrypted byte array (padding has to be handled afterward)
-    private static byte[] DecryptBytes(byte[] bytes, BigInteger modulus, BigInteger privateExponent, int keySize)
+    private static byte[] DecryptBytes(byte[] dataBytes, BigInteger modulus, BigInteger privateExponent, int keySize)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         List<byte[]> decryptedChunks = new List<byte[]>();
         
         // Iterate through the data in chunks
-        for (int bytesProcessed = 0; bytesProcessed < bytes.Length; bytesProcessed += chunkSize)
+        for (int bytesProcessed = 0; bytesProcessed < dataBytes.Length; bytesProcessed += chunkSize)
         {
-            byte[] currentChunk = bytes.Skip(bytesProcessed).Take(chunkSize).ToArray();
+            byte[] currentChunk = dataBytes.Skip(bytesProcessed).Take(chunkSize).ToArray();
 
             BigInteger currentChunkEndian = new BigInteger(currentChunk, isUnsigned: true, isBigEndian: true); // Big Endian is the default for RSA
             BigInteger decryptedChunk = BigInteger.ModPow(currentChunkEndian, privateExponent, modulus);            
@@ -215,80 +216,135 @@ public class RSA : ICommonRSA
         return decryptedChunks.SelectMany(x => x).ToArray();
     }
     
-    private byte[] ApplyPadding(byte[] bytes, int keySize, string padding)
+    private byte[] ApplyPadding(byte[] dataBytes, int keySize, string padding)
     {
         return padding.ToLower() switch
         {
-            "pkcs1" => ApplyPkcs1Padding(bytes: bytes, keySize: keySize),
-            "oaepsha1" => ApplyOaepSha1Padding(bytes: bytes, keySize: keySize),
-            "oaepsha256" => ApplyOaepSha256Padding(bytes: bytes, keySize: keySize),
+            "pkcs1" => ApplyPkcs1Padding(dataBytes: dataBytes, keySize: keySize),
+            "oaepsha1" => ApplyOaepPadding(dataBytes: dataBytes, keySize: keySize, useSHA256: false),
+            "oaepsha256" => ApplyOaepPadding(dataBytes: dataBytes, keySize: keySize, useSHA256: true),
             _ => throw new ArgumentException("Unsupported padding type")
         };
     }
 
-    private byte[] ApplyPkcs1Padding(byte[] bytes, int keySize)
+    private byte[] ApplyPkcs1Padding(byte[] dataBytes, int keySize)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         int paddingOverhead = 11;    // Pkcs1 padding is at least 11 bytes long
         int maxDataLength = chunkSize - paddingOverhead;
 
-        int totalChunks = (int)Math.Ceiling((double)bytes.Length / maxDataLength);
+        int totalChunks = (int)Math.Ceiling((double)dataBytes.Length / maxDataLength);
         byte[] paddedBytes = new byte[totalChunks * chunkSize];
         
         // Iterate through the data in chunks
         for (int processedChunks = 0; processedChunks < totalChunks; processedChunks++)
         {
-            int destinationBytesIndex = processedChunks * chunkSize;
+            int destinationBytesOffset = processedChunks * chunkSize;
             int sourceBytesOffset = processedChunks * maxDataLength;
             
-            int actualDataLength = Math.Min(maxDataLength, bytes.Length - sourceBytesOffset); // If we're at the end of the data, the padding might be longer as we have less actual data to fill the chunk
+            int actualDataLength = Math.Min(maxDataLength, dataBytes.Length - sourceBytesOffset); // If we're at the end of the data, the padding might be longer as we have less actual data to fill the chunk
             
             // Add Pkcs1 padding (0x00, 0x02 , at least 8 random bytes, 0x00)
-            paddedBytes[destinationBytesIndex] = 0x00;
-            paddedBytes[destinationBytesIndex + 1] = 0x02;
+            paddedBytes[destinationBytesOffset] = 0x00;
+            paddedBytes[destinationBytesOffset + 1] = 0x02;
             
             int paddingLength = chunkSize - actualDataLength - 3;
             for (int j = 0; j < paddingLength; j++)
             {
-                paddedBytes[destinationBytesIndex + 2 + j] = (byte)_random.Next(1, 256); // Random padding bytes
+                paddedBytes[destinationBytesOffset + 2 + j] = (byte)_random.Next(1, 256); // Random padding bytes
             }
             
-            paddedBytes[destinationBytesIndex + 2 + paddingLength] = 0x00;
+            paddedBytes[destinationBytesOffset + 2 + paddingLength] = 0x00;
             
             // Insert the actual data to the rest of the chunk
-            Array.Copy(sourceArray: bytes, sourceIndex: sourceBytesOffset, destinationArray: paddedBytes, destinationIndex: (destinationBytesIndex + 3 + paddingLength), length: actualDataLength);
+            Array.Copy(sourceArray: dataBytes, sourceIndex: sourceBytesOffset, destinationArray: paddedBytes, destinationIndex: (destinationBytesOffset + 3 + paddingLength), length: actualDataLength);
         }
         
         return paddedBytes;
     }
 
-    private static byte[] ApplyOaepSha1Padding(byte[] bytes, int keySize)
+    private byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256 = false)
     {
-        // Implement OAEP SHA-1 padding logic here
-        throw new NotImplementedException();
+        int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
+        int hashLength = useSHA256 ? 32 : 20;
+        int dbLength = chunkSize - hashLength - 1;
+        int paddingOverhead = 2 * hashLength + 2;
+        int maxDataLength = chunkSize - paddingOverhead;
+
+        int totalChunks = (int)Math.Ceiling((double)dataBytes.Length / maxDataLength);
+        byte[] paddedBytes = new byte[totalChunks * chunkSize];
+        
+        // Iterate through the data in chunks
+        for (int processedChunks = 0; processedChunks < totalChunks; processedChunks++)
+        {
+            int destinationBytesOffset = processedChunks * chunkSize;
+            int sourceBytesOffset = processedChunks * maxDataLength;
+            
+            int actualDataLength = Math.Min(maxDataLength, dataBytes.Length - sourceBytesOffset); // If we're at the end of the data, the padding might be longer as we have less actual data to fill the chunk
+            int zeroPaddingLength = maxDataLength - actualDataLength; // If the data is shorter than the max length, we need to add zero padding
+
+            // Create the data block (DB) as: Hash(label = 0) || Padding || 0x00 || Data
+            byte[] DBBytes = new byte[dbLength];
+            
+            byte[] labelBytes = useSHA256 ?
+                System.Security.Cryptography.SHA256.HashData(Array.Empty<byte>()) :
+                System.Security.Cryptography.SHA1.HashData(Array.Empty<byte>());
+            Array.Copy(sourceArray: labelBytes, sourceIndex: 0, destinationArray: DBBytes, destinationIndex: 0, length: labelBytes.Length);            
+            
+            byte[] zeroPaddingBytes = new byte[zeroPaddingLength];
+            Array.Fill(zeroPaddingBytes, (byte)0);
+            Array.Copy(sourceArray: zeroPaddingBytes, sourceIndex: 0, destinationArray: DBBytes, destinationIndex: labelBytes.Length, length: zeroPaddingBytes.Length);
+            
+            DBBytes[labelBytes.Length + zeroPaddingLength] = 0x01;
+
+            Array.Copy(sourceArray: dataBytes, sourceIndex: sourceBytesOffset, destinationArray: DBBytes, destinationIndex: labelBytes.Length + zeroPaddingLength + 1, length: actualDataLength);
+            
+            // Get a seed and create a mask for the DB by applying MGF1 to the seed
+            byte[] randomSeedBytes = new byte[hashLength];
+            _random.NextBytes(randomSeedBytes);
+            byte[] dbMaskBytes = ApplyMGF1(seed: randomSeedBytes, maskLength: dbLength, useSHA256: useSHA256);
+            
+            // Mask the DB by XORing it with the mask
+            byte[] maskedDB = XORBytes(DBBytes, dbMaskBytes);
+            
+            // Create a mask for the seed by applying MGF1 to the masked DB and XORing it with the seed
+            byte[] seedMask = ApplyMGF1(seed: maskedDB, maskLength: hashLength, useSHA256: useSHA256);
+            byte[] maskedSeed = XORBytes(randomSeedBytes, seedMask);
+            
+            // Concatenate the masked seed and masked DB to get the final padded data (0x01, maskedSeed, maskedDB)
+            byte[] paddedChunkBytes = new byte[chunkSize];
+            paddedChunkBytes[0] = 0x00;
+            Array.Copy(sourceArray: maskedSeed, sourceIndex: 0, destinationArray: paddedChunkBytes, destinationIndex: 1, length: hashLength);
+            Array.Copy(sourceArray: maskedDB, sourceIndex: 0, destinationArray: paddedChunkBytes, destinationIndex: hashLength + 1, length: dbLength);
+            
+            // Add to the other chunks
+            Array.Copy(sourceArray: paddedChunkBytes, sourceIndex: 0, destinationArray: paddedBytes, destinationIndex: destinationBytesOffset, length: chunkSize);
+        }
+
+        return paddedBytes;
     }
 
-    private static byte[] ApplyOaepSha256Padding(byte[] bytes, int keySize)
+    private static byte[] ApplyOaepSha256Padding(byte[] dataBytes, int keySize)
     {
         // Implement OAEP SHA-256 padding logic here
         throw new NotImplementedException();
     }
     
-    private static byte[] RemovePadding(byte[] bytes, int keySize, string padding)
+    private static byte[] RemovePadding(byte[] dataBytes, int keySize, string padding)
     {
         return padding.ToLower() switch
         {
-            "pkcs1" => RemovePkcs1Padding(bytes, keySize),
-            "oaepsha1" => RemoveOaepSha1Padding(bytes, keySize),
-            "oaepsha256" => RemoveOaepSha256Padding(bytes, keySize),
+            "pkcs1" => RemovePkcs1Padding(dataBytes, keySize),
+            "oaepsha1" => RemoveOaepSha1Padding(dataBytes, keySize),
+            "oaepsha256" => RemoveOaepSha256Padding(dataBytes, keySize),
             _ => throw new ArgumentException("Unsupported padding type")
         };
     }
 
-    private static byte[] RemovePkcs1Padding(byte[] bytes, int keySize)
+    private static byte[] RemovePkcs1Padding(byte[] dataBytes, int keySize)
     {
         int chunkSize = keySize / 8;    // Chunk size is the key's size in bytes
-        int totalChunks = bytes.Length / chunkSize;
+        int totalChunks = dataBytes.Length / chunkSize;
         
         List<byte[]> unpaddedBytes = new List<byte[]>();
         
@@ -299,14 +355,14 @@ public class RSA : ICommonRSA
             int chunkPaddingStartIndex = chunkStartIndex + 2; // The padding starts at the third byte (0x00, 0x02, ...)
             
             // Find the 0x00 delimiter between padding and data
-            int delimiterIndex = Array.IndexOf(array: bytes, value: (byte)0x00, startIndex: chunkPaddingStartIndex, count: ((chunkStartIndex + chunkSize) - chunkPaddingStartIndex));
+            int delimiterIndex = Array.IndexOf(array: dataBytes, value: (byte)0x00, startIndex: chunkPaddingStartIndex, count: ((chunkStartIndex + chunkSize) - chunkPaddingStartIndex));
 
             int dataStartIndex = delimiterIndex + 1; // (0x00, 0x02, ..., 0x00, {data})
 
             int numDataBytes = (chunkStartIndex + chunkSize) - dataStartIndex;
 
             byte[] unpaddedChunk = new byte[numDataBytes];
-            Array.Copy(sourceArray: bytes, sourceIndex: dataStartIndex, destinationArray: unpaddedChunk, destinationIndex: 0, length: numDataBytes);
+            Array.Copy(sourceArray: dataBytes, sourceIndex: dataStartIndex, destinationArray: unpaddedChunk, destinationIndex: 0, length: numDataBytes);
             
             unpaddedBytes.Add(unpaddedChunk);
         }
@@ -314,12 +370,12 @@ public class RSA : ICommonRSA
         return unpaddedBytes.SelectMany(x => x).ToArray();
     }
 
-    private static byte[] RemoveOaepSha1Padding(byte[] data, int keySize)
+    private static byte[] RemoveOaepSha1Padding(byte[] dataBytes, int keySize)
     {
         throw new NotImplementedException();
     }
 
-    private static byte[] RemoveOaepSha256Padding(byte[] data, int keySize)
+    private static byte[] RemoveOaepSha256Padding(byte[] dataBytes, int keySize)
     {
         throw new NotImplementedException();
     }
@@ -469,9 +525,30 @@ public class RSA : ICommonRSA
     }
 
     // Apply MGF1 on a byte array with either SHA1 or SHA256, used for OAEP
-    private static byte[] ApplyMGF1(byte[] seed, int maskLength, bool useSHA1)
+    private static byte[] ApplyMGF1(byte[] seed, int maskLength, bool useSHA256)
     {
-        throw new NotImplementedException();
+        List<byte> maskBytes = new List<byte>(maskLength);
+        int counter = 0;
+
+        while (maskBytes.Count < maskLength)
+        {
+            // Ensure big endian byte array representation of the counter
+            byte[] counterBytes = BitConverter.GetBytes(counter);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(counterBytes);
+            }
+            
+            // Concatenate the seed with the count (As 4 Byte representation) and hash it with either SHA1 or SHA256
+            maskBytes.AddRange(useSHA256
+                ? System.Security.Cryptography.SHA256.HashData(seed.Concat(counterBytes).ToArray())
+                : System.Security.Cryptography.SHA1.HashData(seed.Concat(counterBytes).ToArray()));
+            
+            counter++;
+        }
+        
+        // Return only asked for length
+        return maskBytes.Take(maskLength).ToArray();
     }
 
     // XOR two byte arrays, used for OAEP
