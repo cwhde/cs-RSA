@@ -24,15 +24,8 @@ A custom implementation of RSA encryption in C\# created as part of my Matura-Pr
 * RSA implementation with PKCS1 Padding
 * Key handling (generation, parsing) in X.509/PKCS\#8 format
 * Support for various key formats (X509 String, PEM File contents, PEM File)
-* CLI for encrypting and decrypting messages
+* Comprehensive CLI for encrypting and decrypting messages (from and to files or input), checking the algorithm against the reference implementation and working with keys (generating, reading, writing, from input)
 * Comprehensive testing suite
-
-
-## Planned Features
-
-* OaepSHA1 and OaepSHA256 Padding support
-* Enhanced CLI with better user experience
-* Implementation unit test interfaces
 
 
 ## Technical Notes
