@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         runtime: ['win-x64', 'linux-x64']
-        self-contained: [true, false]
         include:
           - runtime: win-x64
             os: windows
@@ -31,69 +30,57 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    - name: Set build variables
-      id: vars
+    - name: Extract version
+      id: version
       run: |
         VERSION="${GITHUB_REF#refs/tags/}"
         VERSION="${VERSION#v}"
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        
-        if [ "${{ matrix.self-contained }}" = "true" ]; then
-          echo "SUFFIX=-standalone" >> $GITHUB_OUTPUT
-          echo "SELF_CONTAINED=true" >> $GITHUB_OUTPUT
-        else
-          echo "SUFFIX=" >> $GITHUB_OUTPUT
-          echo "SELF_CONTAINED=false" >> $GITHUB_OUTPUT
-        fi
 
-    - name: Build
+    - name: Build framework-dependent (non-standalone)
       run: |
-        # Clean publish directory to avoid conflicts
-        rm -rf ./publish || true
-        mkdir -p ./publish
+        # Clean publish directory
+        rm -rf ./publish-framework || true
+        mkdir -p ./publish-framework
         
-        # Using explicit path to the CLI project
         dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
           -p:PublishSingleFile=true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
-          -p:PublishReadyToRun=true \
-          --self-contained ${{ steps.vars.outputs.SELF_CONTAINED }} \
-          -o ./publish/
+          --self-contained false \
+          -o ./publish-framework/
 
-    - name: List files in publish directory (debug)
+    - name: Build standalone
       run: |
-        ls -la ./publish/
+        # Clean publish directory
+        rm -rf ./publish-standalone || true
+        mkdir -p ./publish-standalone
+        
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          --self-contained true \
+          -o ./publish-standalone/
 
-    - name: Rename executable
+    - name: Rename executables
       run: |
-        # For Windows executable
+        # Framework-dependent executable
         if [ "${{ matrix.runtime }}" = "win-x64" ]; then
-          if [ -f "./publish/RSA.CLI.exe" ]; then
-            cp "./publish/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.vars.outputs.VERSION }}${{ steps.vars.outputs.SUFFIX }}.exe"
-            echo "Copied Windows executable successfully"
-          else
-            echo "ERROR: Windows executable not found"
-            ls -la ./publish/
-            exit 1
-          fi
+          cp "./publish-framework/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}.exe"
+        else
+          cp "./publish-framework/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}"
         fi
         
-        # For Linux executable
-        if [ "${{ matrix.runtime }}" = "linux-x64" ]; then
-          if [ -f "./publish/RSA.CLI" ]; then
-            cp "./publish/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.vars.outputs.VERSION }}${{ steps.vars.outputs.SUFFIX }}"
-            echo "Copied Linux executable successfully"
-          else
-            echo "ERROR: Linux executable not found"
-            ls -la ./publish/
-            exit 1
-          fi
+        # Standalone executable
+        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
+          cp "./publish-standalone/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone.exe"
+        else
+          cp "./publish-standalone/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone"
         fi
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build-${{ matrix.runtime }}-${{ matrix.self-contained }}
+        name: build-${{ matrix.runtime }}
         path: csrsa-cli-*
         retention-days: 1
   
