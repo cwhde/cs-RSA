@@ -1,29 +1,103 @@
-﻿name: Delete All Artifacts
+﻿name: Build and Release
 
 on:
-  workflow_dispatch:  # Manual trigger
-  schedule:
-    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  delete-artifacts:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
+    strategy:
+      matrix:
+        runtime: ['win-x64', 'linux-x64']
+        include:
+          - runtime: win-x64
+            os: windows
+            extension: .exe
+          - runtime: linux-x64
+            os: linux
+            extension: ''
+
     steps:
-      - name: Delete Artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const artifacts = await github.rest.actions.listArtifactsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-            for (const artifact of artifacts.data.artifacts) {
-              console.log(`Deleting artifact ${artifact.name}...`);
-              await github.rest.actions.deleteArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id
-              });
-            }
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Build standalone
+      run: |
+        # Clean publish directory to avoid conflicts
+        rm -rf ./publish || true
+        mkdir -p ./publish
+        
+        # Using explicit path to the CLI project
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:PublishReadyToRun=true \
+          --self-contained true \
+          -o ./publish/
+
+    - name: List files in publish directory (debug)
+      run: |
+        ls -la ./publish/
+
+    - name: Rename executable
+      run: |
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION="${VERSION#v}"
+        
+        # For Windows executable
+        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
+          if [ -f "./publish/RSA.CLI.exe" ]; then
+            cp "./publish/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}.exe"
+            echo "Copied Windows executable successfully"
+          else
+            echo "ERROR: Windows executable not found"
+            ls -la ./publish/
+            exit 1
+          fi
+        fi
+        
+        # For Linux executable
+        if [ "${{ matrix.runtime }}" = "linux-x64" ]; then
+          if [ -f "./publish/RSA.CLI" ]; then
+            cp "./publish/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}"
+            echo "Copied Linux executable successfully"
+          else
+            echo "ERROR: Linux executable not found"
+            ls -la ./publish/
+            exit 1
+          fi
+        fi
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: builds-${{ matrix.runtime }}  # Unique name for each matrix job
+        path: csrsa-cli-*
+        retention-days: 1
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: builds-*
+        merge-multiple: true
+        path: ./
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: csrsa-cli-*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
