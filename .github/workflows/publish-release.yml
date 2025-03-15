@@ -62,7 +62,7 @@ jobs:
           # Rename to your desired format
           VERSION="${GITHUB_REF#refs/tags/}"
           VERSION="${VERSION#v}"
-          cp "$FILE" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}${EXTENSION}"
+          cp "$FILE" "csrsa-cli-${{ matrix.runtime }}-${VERSION}${EXTENSION}"
         done
 
     - name: Upload artifacts
