@@ -2,7 +2,6 @@
 
 namespace RSA.CLI;
 
-// Cleans up test files after running tests
     public class CommandLine
     {
         private string? _activePublicKey;
@@ -253,7 +252,7 @@ namespace RSA.CLI;
         }
     }
 
-// Validates the last encryption/decryption against the ReferenceRSA implementation (CORRECTED + EXCEPTION HANDLING).
+    // Validates the last encryption/decryption against the ReferenceRSA implementation (CORRECTED + EXCEPTION HANDLING).
     private bool? ValidateAgainstReference(string originalPlaintext) // Return type changed to bool? (nullable boolean)
     {
         if (string.IsNullOrEmpty(_activePublicKey) || string.IsNullOrEmpty(_activePrivateKey))
@@ -420,12 +419,9 @@ namespace RSA.CLI;
     //Displays the currently active keys.
     private void HandleKeyInfoCommand()
     {
-        Console.WriteLine(); // Keep new line before key info display
         if (!string.IsNullOrEmpty(_activePublicKey))
         {
-            Console.WriteLine("-----BEGIN PUBLIC KEY-----");
-            Console.WriteLine(_activePublicKey.Replace("-----BEGIN PUBLIC KEY-----", "").Replace("-----END PUBLIC KEY-----", ""));
-            Console.WriteLine("-----END PUBLIC KEY-----");
+            Console.WriteLine(_activePublicKey);
         }
         else
         {
@@ -436,15 +432,12 @@ namespace RSA.CLI;
 
         if (!string.IsNullOrEmpty(_activePrivateKey))
         {
-            Console.WriteLine("-----BEGIN PRIVATE KEY-----");
-            Console.WriteLine(_activePrivateKey.Replace("-----BEGIN PRIVATE KEY-----", "").Replace("-----END PRIVATE KEY-----", ""));
-            Console.WriteLine("-----END PRIVATE KEY-----");
+            Console.WriteLine(_activePrivateKey);
         }
         else
         {
             Console.WriteLine("No active private key.");
         }
-        Console.WriteLine(); // Keep new line after key info display
     }
 
     // Handles changing the padding mode.
@@ -478,7 +471,6 @@ namespace RSA.CLI;
                 Console.WriteLine("No previous encryption/decryption to check.");
                 return;
             }
-            Console.WriteLine(); // Keep new line before check result output
 
             bool? validationResult = ValidateAgainstReference(_lastPlaintext);
             if (validationResult == true)
@@ -495,6 +487,7 @@ namespace RSA.CLI;
             }
         }
     }
+
     //Reads plaintext from file.
     private void HandleReadPlainFileCommand(string[] parts)
     {

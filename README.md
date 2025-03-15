@@ -24,6 +24,7 @@ A custom implementation of RSA encryption in C\# created as part of my Matura-Pr
 * RSA implementation with PKCS1 Padding
 * Key handling (generation, parsing) in X.509/PKCS\#8 format
 * Support for various key formats (X509 String, PEM File contents, PEM File)
+* Support for various padding modes (Pkcs1, Oaep with SHA1, Oaep with SHA256)
 * Comprehensive CLI for encrypting and decrypting messages (from and to files or input), checking the algorithm against the reference implementation and working with keys (generating, reading, writing, from input)
 * Comprehensive testing suite
 
@@ -42,4 +43,4 @@ A custom implementation of RSA encryption in C\# created as part of my Matura-Pr
     * [RSA Algorithm Demystified (arXiv)](https://arxiv.org/abs/2308.02785) - Detailed documentation
 * **Validating Results:**
     * Use the included ReferenceRSA project
-    * [AnyCrypt](https://anycript.com/crypto/rsa) - Online tool for RSA operations and validation
+    * [BTool](https://www.btool.cn/en/rsa) - Online tool for RSA operations and validation
