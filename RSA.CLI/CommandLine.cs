@@ -2,185 +2,73 @@
 
 namespace RSA.CLI;
 
-public class CommandLine
-{
-    private string? _activePublicKey;
-    private string? _activePrivateKey;
-    private string _activePaddingMode = "oaepsha256"; // Default padding mode
-    private string? _lastCiphertext;
-    private string? _lastPlaintext;
-    private Mode _currentMode = Mode.Default;
-
-    public bool TestSuccess { get; private set; } = false;
-
-    private readonly RSA _rsaImplementation = new RSA();
-    private readonly ReferenceRSA.ReferenceRSA _referenceRsa = new ReferenceRSA.ReferenceRSA();
-
-    private enum Mode
+// Cleans up test files after running tests
+    public class CommandLine
     {
-        Default,
-        Encrypt,
-        Decrypt
-    }
+        private string? _activePublicKey;
+        private string? _activePrivateKey;
+        private string _activePaddingMode = "oaepsha256"; // Default padding mode
+        private string? _lastCiphertext;
+        private string? _lastPlaintext;
+        private Mode _currentMode = Mode.Default;
 
-    // Static Main method - Entry point of the application
-    public static void Main(string[] args)
-    {
-        CommandLine commandLine = new CommandLine();
-        commandLine.Run();
-    }
+        public bool TestSuccess { get; private set; } = false;
 
-    // Main entry point to start the CLI
-    public void Run(bool isTesting = false)
-    {
-        if (isTesting)
+        private readonly RSA _rsaImplementation = new RSA();
+        private readonly ReferenceRSA.ReferenceRSA _referenceRsa = new ReferenceRSA.ReferenceRSA();
+
+        private enum Mode
         {
-            RunAutomatedTests(); // Call a new method for automated tests
+            Default,
+            Encrypt,
+            Decrypt
         }
-        else
+
+        // Static Main method - Entry point of the application
+        public static void Main(string[] args)
         {
-            // Generate initial key pair on startup
-            (string publicKey, string privateKey) = _rsaImplementation.GenerateKeys(2048);
-            _activePublicKey = publicKey;
-            _activePrivateKey = privateKey;
+            CommandLine commandLine = new CommandLine();
+            commandLine.Run();
+        }
 
-            Console.WriteLine("RSA Interactive Tool (RIT) started.");
-            Console.WriteLine("A 2048-bit key pair has been generated. Use !help for commands.");
-            Console.WriteLine(); // Keep new line after startup messages
-
-            while (true)
+        // Main entry point to start the CLI
+        public void Run(bool isTesting = false)
+        {
+            if (isTesting)
             {
-                Console.Write("RIT > ");
-                string? input = Console.ReadLine();
+                RunAutomatedTests(); // Call a new method for automated tests
+            }
+            else
+            {
+                // Generate initial key pair on startup
+                (string publicKey, string privateKey) = _rsaImplementation.GenerateKeys(2048);
+                _activePublicKey = publicKey;
+                _activePrivateKey = privateKey;
 
-                if (string.IsNullOrWhiteSpace(input))
-                {
-                    continue; // Ignore empty input
-                }
+                Console.WriteLine("RSA Interactive Tool (RIT) started.");
+                Console.WriteLine("A 2048-bit key pair has been generated. Use !help for commands.");
+                Console.WriteLine(); // Keep new line after startup messages
 
-                if (input.StartsWith('!'))
+                while (true)
                 {
-                    HandleCommand(input);
-                }
-                else
-                {
-                    HandleInput(input);
+                    Console.Write("RIT > ");
+                    string? input = Console.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(input))
+                    {
+                        continue; // Ignore empty input
+                    }
+                    if (input.StartsWith('!'))
+                    {
+                        HandleCommand(input);
+                    }
+                    else
+                    {
+                        HandleInput(input);
+                    }
                 }
             }
         }
-    }
-
-    // Runs automated testing on the code and enables usage of private methods
-    private void RunAutomatedTests()
-    {
-        Console.WriteLine("Running automated tests...");
-
-        // Setup test files and directories
-        string testPublicKeyFile = "test_public_key.pem";
-        string testPrivateKeyFile = "test_private_key.pem";
-        string testPlaintextFile = "test_plaintext.txt";
-        string testCiphertextFile = "test_ciphertext.txt";
-        string nonExistentFile = "non_existent_file.txt";
-
-        // Ensure test files are cleaned up before running tests
-        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile);
-
-
-        // Define a sequence of commands and inputs to simulate user interaction
-        string[] testCommands =
-        [
-            "!help",          // Test help command
-            "!generatekeypair 1024", // Test key generation
-            "!generatekeypair invalid_size", // Test invalid key size input
-            "!generatekeypair 512", // Test 512 key size
-            "!keyinfo",       // Test key info display
-            "!padding pkcs1", // Test padding change to pkcs1
-            "!padding oaepsha1", // Test padding change to oaepsha1
-            "!padding invalid_padding", // Test invalid padding input
-            "!padding",        // Test padding command without arguments to display current padding
-
-            "Test message 1", // Default mode input (encrypt/decrypt/validate)
-            "!encrypt",       // Switch to encrypt mode
-            "Test message 2", // Encrypt mode input
-            "!decrypt",       // Switch to decrypt mode
-
-            // Simulate ciphertext - encrypt a known message first to get ciphertext
-            "!encrypt Test message for ciphertext",
-            "!writecipherfile temp_ciphertext.txt", // Save ciphertext to temp file
-            "!readcipherfile temp_ciphertext.txt", // Read ciphertext back
-            "!decrypt", // Prepare for decrypt mode
-            File.Exists("temp_ciphertext.txt") ? File.ReadAllText("temp_ciphertext.txt") : "paste_ciphertext_here_fallback", // Provide ciphertext input
-            "!default",       // Switch back to default mode
-            "Test message 3", // Default mode again after decrypt
-
-            "!check reference", // Test reference check
-            "!check invalid_arg", // Test invalid check command
-
-            "!writepublickey " + testPublicKeyFile, // Test write public key
-            "!writeprivatekey " + testPrivateKeyFile, // Test write private key
-            "!loadpublickey " + testPublicKeyFile, // Test load public key from file
-            "!loadprivatekey " + testPrivateKeyFile, // Test load private key from file
-            "!loadpublickey invalid_public_key_file.pem", // Test load invalid public key file
-            "!loadprivatekey invalid_private_key_file.pem", // Test load invalid private key file
-            "!loadpublickey -----BEGIN PUBLIC KEY-----INVALID KEY-----END PUBLIC KEY-----", // Test load invalid public key string
-            "!loadprivatekey -----BEGIN PRIVATE KEY-----INVALID KEY-----END PRIVATE KEY-----", // Test load invalid private key string
-            "!loadpublickey", // Test load public key command with no argument
-            "!loadprivatekey", // Test load private key command with no argument
-            "!writepublickey", // Test write public key command with no argument
-            "!writeprivatekey", // Test write private key command with no argument
-
-            "!readplainfile " + testPlaintextFile, // Test read plaintext file - will fail as file doesn't exist yet, testing error case
-            "!readcipherfile " + testCiphertextFile, // Test read ciphertext file - will fail as file doesn't exist yet, testing error case
-            "!writeplainfile " + testPlaintextFile, // Prepare to write plaintext file
-            "This is a test plaintext to be written to a file.", // Input plaintext
-            "!writeplainfile " + testPlaintextFile, // Write plaintext file
-            "!readplainfile " + testPlaintextFile, // Read plaintext file
-            "!writecipherfile " + testCiphertextFile, // Write ciphertext file after encryption in default mode - using last ciphertext
-            "!readcipherfile " + testCiphertextFile, // Read ciphertext file
-            "!writeplainfile", // Test write plain file command with no argument
-            "!writecipherfile", // Test write cipher file command with no argument
-            "!readplainfile", // Test read plain file command with no argument
-            "!readcipherfile", // Test read cipher file command with no argument
-            "!readplainfile " + nonExistentFile, // Test read plain file command with non-existent file
-            "!readcipherfile " + nonExistentFile, // Test read cipher file command with non-existent file
-
-
-            "!padding oaepsha256", // Reset padding to default
-            "!exit"           // Exit command
-        ];
-
-        // Create dummy files for read/write tests before loop starts
-        File.WriteAllText(testPlaintextFile, "Initial plaintext content for test file.");
-
-
-        foreach (string command in testCommands)
-        {
-            Console.WriteLine($"Executing command: {command}");
-            HandleCommand(command, isTesting: true);
-
-            if (!TestSuccess) // Reset TestSuccess at the start of each command execution
-            {
-                 TestSuccess = true; // Assume success unless HandleCommand sets it to false internally (if you implement such logic)
-            }
-        }
-
-         // Cleanup test files after running tests
-        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile, "temp_ciphertext.txt");
-
-        Console.WriteLine("Automated tests finished.");
-    }
-    
-    // Cleans up test files after running tests
-    private static void CleanupTestFiles(params string[] files)
-    {
-        foreach (string file in files)
-        {
-            if (File.Exists(file))
-            {
-                File.Delete(file);
-            }
-        }
-    }
 
     // Handles commands prefixed with "!"
     private void HandleCommand(string command, bool isTesting = false)
@@ -732,5 +620,156 @@ public class CommandLine
         Console.WriteLine("In Default mode, enter plaintext to encrypt, decrypt, and validate.");
         Console.WriteLine("In Encrypt-Only mode, enter plaintext to encrypt.");
         Console.WriteLine("In Decrypt-Only mode, enter ciphertext to decrypt.");
+    }
+    
+    // Runs automated testing on the code and enables usage of private methods
+private void RunAutomatedTests()
+{
+    Console.WriteLine("Running automated tests...");
+    TestSuccess = false; // Start with failure assumption
+
+    // Setup test files and directories
+    string testPublicKeyFile = "test_public_key.pem";
+    string testPrivateKeyFile = "test_private_key.pem";
+    string testPlaintextFile = "test_plaintext.txt";
+    string testCiphertextFile = "test_ciphertext.txt";
+    string nonExistentFile = "non_existent_file.txt";
+
+    try
+    {
+        // Ensure test files are cleaned up before running tests
+        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile, "temp_ciphertext.txt");
+
+        // Create initial keypair for testing
+        Console.WriteLine("Generating initial key pair for testing...");
+        (string publicKey, string privateKey) = _rsaImplementation.GenerateKeys(2048);
+        _activePublicKey = publicKey;
+        _activePrivateKey = privateKey;
+
+        // Test HandleInput with different modes directly
+        Console.WriteLine("Testing HandleInput with different modes...");
+        _currentMode = Mode.Default;
+        HandleInput("Testing input handler with default mode");
+        
+        _currentMode = Mode.Encrypt;
+        HandleInput("Testing input handler with encrypt mode");
+        string savedCiphertext = _lastCiphertext ?? ""; // Save for decrypt test
+        
+        _currentMode = Mode.Decrypt;
+        HandleInput(savedCiphertext);
+
+        // Test all three mode handlers directly
+        Console.WriteLine("Testing mode handlers directly...");
+        HandleDefaultMode("Direct test for default mode");
+        HandleEncryptMode("Direct test for encrypt mode");
+        HandleDecryptMode(_lastCiphertext ?? "");
+
+        // Test commands with inadequate parameters
+        Console.WriteLine("Testing commands with missing parameters...");
+        HandleCommand("!generatekeypair", isTesting: true);
+        HandleCommand("!writepublickey", isTesting: true);
+        HandleCommand("!writeprivatekey", isTesting: true);
+        HandleCommand("!readplainfile", isTesting: true);
+        HandleCommand("!readcipherfile", isTesting: true);
+        HandleCommand("!writeplainfile", isTesting: true);
+        HandleCommand("!writecipherfile", isTesting: true);
+        HandleCommand("!loadpublickey", isTesting: true);
+        HandleCommand("!loadprivatekey", isTesting: true);
+        HandleCommand("!check", isTesting: true);
+        
+        // Test standard command workflow
+        Console.WriteLine("Testing standard command workflow...");
+        HandleCommand("!help", isTesting: true);
+        HandleCommand("!generatekeypair 1024", isTesting: true);
+        HandleCommand("!generatekeypair invalid_size", isTesting: true);
+        HandleCommand("!generatekeypair 512", isTesting: true);
+        HandleCommand("!keyinfo", isTesting: true);
+        
+        // Test padding modes
+        HandleCommand("!padding pkcs1", isTesting: true);
+        HandleCommand("!padding oaepsha1", isTesting: true);
+        HandleCommand("!padding invalid_padding", isTesting: true);
+        HandleCommand("!padding", isTesting: true);
+        HandleCommand("!padding oaepsha256", isTesting: true); // Reset to default
+
+        // Test file operations with actual files
+        Console.WriteLine("Testing file operations with actual files...");
+        File.WriteAllText(testPlaintextFile, "Test plaintext content");
+        HandleCommand("!readplainfile " + testPlaintextFile, isTesting: true);
+        HandleCommand("!writecipherfile " + testCiphertextFile, isTesting: true);
+        HandleCommand("!readcipherfile " + testCiphertextFile, isTesting: true);
+        HandleCommand("!writeplainfile " + testPlaintextFile, isTesting: true);
+        
+        // Test key file operations
+        HandleCommand("!writepublickey " + testPublicKeyFile, isTesting: true);
+        HandleCommand("!writeprivatekey " + testPrivateKeyFile, isTesting: true);
+        HandleCommand("!loadpublickey " + testPublicKeyFile, isTesting: true);
+        HandleCommand("!loadprivatekey " + testPrivateKeyFile, isTesting: true);
+        
+        // Test error cases
+        Console.WriteLine("Testing error cases...");
+        HandleCommand("!loadpublickey invalid_file.pem", isTesting: true);
+        HandleCommand("!loadprivatekey invalid_file.pem", isTesting: true);
+        HandleCommand("!readplainfile " + nonExistentFile, isTesting: true);
+        HandleCommand("!readcipherfile " + nonExistentFile, isTesting: true);
+        HandleCommand("!loadpublickey -----BEGIN PUBLIC KEY-----INVALID KEY-----END PUBLIC KEY-----", isTesting: true);
+        HandleCommand("!loadprivatekey -----BEGIN PRIVATE KEY-----INVALID KEY-----END PRIVATE KEY-----", isTesting: true);
+        
+        // Test with no keys
+        Console.WriteLine("Testing operations with no keys...");
+        string savedPubKey = _activePublicKey;
+        string savedPrivKey = _activePrivateKey;
+        _activePublicKey = null;
+        _activePrivateKey = null;
+        
+        HandleEncryptMode("This should fail - no public key");
+        HandleDecryptMode("This should fail - no private key");
+        HandleDefaultMode("This should fail - no keys");
+        
+        // Restore keys
+        _activePublicKey = savedPubKey;
+        _activePrivateKey = savedPrivKey;
+        
+        // Test mode switches
+        HandleCommand("!encrypt", isTesting: true);
+        HandleCommand("!decrypt", isTesting: true);
+        HandleCommand("!default", isTesting: true);
+        HandleCommand("!validate", isTesting: true); // Alias for default
+        
+        // Test reference check 
+        HandleCommand("!check reference", isTesting: true);
+        HandleCommand("!check invalid_arg", isTesting: true);
+        
+        // Test exit command behavior
+        HandleCommand("!exit", isTesting: true);
+        
+        // Test unknown command
+        HandleCommand("!unknown_command", isTesting: true);
+        
+        // If we get here, tests passed
+        TestSuccess = true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Automated tests failed: {ex.Message}");
+        TestSuccess = false;
+    }
+    finally
+    {
+        // Always clean up test files
+        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile, "temp_ciphertext.txt");
+        Console.WriteLine("Automated tests finished. Success: " + (TestSuccess ? "✅" : "❌"));
+    }
+}
+
+    private static void CleanupTestFiles(params string[] files)
+    {
+        foreach (string file in files)
+        {
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
+        }
     }
 }
