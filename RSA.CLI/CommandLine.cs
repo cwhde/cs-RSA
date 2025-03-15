@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Numerics;
-using RSA.commons;
-using System.Security.Cryptography;
+﻿using RSA.commons;
 
 namespace RSA.CLI;
 
@@ -15,6 +10,8 @@ public class CommandLine
     private string? _lastCiphertext;
     private string? _lastPlaintext;
     private Mode _currentMode = Mode.Default;
+
+    public bool TestSuccess { get; private set; } = false;
 
     private readonly RSA _rsaImplementation = new RSA();
     private readonly ReferenceRSA.ReferenceRSA _referenceRsa = new ReferenceRSA.ReferenceRSA();
@@ -29,8 +26,8 @@ public class CommandLine
     // Static Main method - Entry point of the application
     public static void Main(string[] args)
     {
-        CommandLine cli = new CommandLine();
-        cli.Run();
+        CommandLine commandLine = new CommandLine();
+        commandLine.Run();
     }
 
     // Main entry point to start the CLI
@@ -61,7 +58,7 @@ public class CommandLine
                     continue; // Ignore empty input
                 }
 
-                if (input.StartsWith("!"))
+                if (input.StartsWith('!'))
                 {
                     HandleCommand(input);
                 }
@@ -79,8 +76,8 @@ public class CommandLine
         Console.WriteLine("Running automated tests...");
 
         // Define a sequence of commands and inputs to simulate user interaction
-        string[] testCommands = new string[]
-        {
+        string[] testCommands =
+        [
             "!help",          // Test help command
             "!generatekeypair 1024", // Test key generation
             "!keyinfo",       // Test key info display
@@ -98,19 +95,19 @@ public class CommandLine
             "!loadprivatekey test_private_key.pem", // Test load private key from file
             "!padding oaepsha256", // Reset padding
             "!exit"           // Exit command
-        };
+        ];
 
         foreach (string command in testCommands)
         {
             Console.WriteLine($"Executing command: {command}");
-            HandleCommand(command);
+            HandleCommand(command, isTesting: true);
 
-        Console.WriteLine("Automated tests finished.");
+            TestSuccess = true;
         }
     }
 
     // Handles commands prefixed with "!"
-    private void HandleCommand(string command)
+    private void HandleCommand(string command, bool isTesting = false)
     {
         string[] parts = command.Split(' ');
         string commandName = parts[0].ToLower();
@@ -171,7 +168,14 @@ public class CommandLine
                 DisplayHelp();
                 break;
             case "!exit":
-                Environment.Exit(0);
+                if (!isTesting) // Only exit if not in testing mode
+                {
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    Console.WriteLine("!exit command ignored during testing."); // Optional feedback during testing
+                }
                 break;
             default:
                 Console.WriteLine($"Unknown command: {commandName}");
@@ -218,14 +222,7 @@ public class CommandLine
             // Removed extra new line after Decrypted Plaintext
 
             // Validate against original plaintext
-            if (decryptedPlaintext == plaintext)
-            {
-                Console.WriteLine("✅ Validation against original plaintext successful!");
-            }
-            else
-            {
-                Console.WriteLine("❌ Validation against original plaintext failed.");
-            }
+            Console.WriteLine(decryptedPlaintext == plaintext ? "✅ Validation against original plaintext successful!" : "❌ Validation against original plaintext failed.");
 
             // Validate against ReferenceRSA
             bool? referenceValidationResult = ValidateAgainstReference(plaintext);
@@ -361,22 +358,22 @@ public class CommandLine
     private void HandleLoadPublicKeyCommand(string[] parts)
     {
       if (parts.Length < 2)
-        {
-            Console.WriteLine("Usage: !loadpublickey <filepath or key string>");
-            return;
-        }
+      {
+          Console.WriteLine("Usage: !loadpublickey <filepath or key string>");
+          return;
+      }
 
-        string keySource = string.Join(" ", parts, 1, parts.Length - 1);
+      string keySource = string.Join(" ", parts, 1, parts.Length - 1);
 
-        try
-        {
-            _activePublicKey = RSAUtils.SanitizeKeyInput(keySource, true);
-            Console.WriteLine("Public key loaded and set as active.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading public key: {ex.Message}");
-        }
+      try
+      {
+          _activePublicKey = RSAUtils.SanitizeKeyInput(keySource, true);
+          Console.WriteLine("Public key loaded and set as active.");
+      }
+      catch (Exception ex)
+      {
+          Console.WriteLine($"Error loading public key: {ex.Message}");
+      }
     }
 
     //Handles loading a private key from file or string
@@ -635,7 +632,7 @@ public class CommandLine
     }
 
     // Displays available commands.
-    private void DisplayHelp()
+    private static void DisplayHelp()
     {
         Console.WriteLine("Available commands:");
         Console.WriteLine("  !generatekeypair <keysize> - Generate a new key pair.");

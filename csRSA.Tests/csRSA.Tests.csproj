@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ReferenceRSA\ReferenceRSA.csproj" />
+    <ProjectReference Include="..\RSA.CLI\RSA.CLI.csproj" />
     <ProjectReference Include="..\RSA\RSA.csproj" />
   </ItemGroup>
   

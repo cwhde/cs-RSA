@@ -2,6 +2,17 @@
   <dictionary name="project">
     <words>
       <w>devglan</w>
+      <w>generatekeypair</w>
+      <w>keyinfo</w>
+      <w>keysize</w>
+      <w>loadprivatekey</w>
+      <w>loadpublickey</w>
+      <w>readcipherfile</w>
+      <w>readplainfile</w>
+      <w>writecipherfile</w>
+      <w>writeplainfile</w>
+      <w>writeprivatekey</w>
+      <w>writepublickey</w>
     </words>
   </dictionary>
 </component>
