@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         runtime: ['win-x64', 'linux-x64']
+        self-contained: [true, false]
         include:
           - runtime: win-x64
             os: windows
@@ -30,7 +31,22 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    - name: Build standalone
+    - name: Set build variables
+      id: vars
+      run: |
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION="${VERSION#v}"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+        if [ "${{ matrix.self-contained }}" = "true" ]; then
+          echo "SUFFIX=-standalone" >> $GITHUB_OUTPUT
+          echo "SELF_CONTAINED=true" >> $GITHUB_OUTPUT
+        else
+          echo "SUFFIX=" >> $GITHUB_OUTPUT
+          echo "SELF_CONTAINED=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Build
       run: |
         # Clean publish directory to avoid conflicts
         rm -rf ./publish || true
@@ -41,7 +57,7 @@ jobs:
           -p:PublishSingleFile=true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
           -p:PublishReadyToRun=true \
-          --self-contained true \
+          --self-contained ${{ steps.vars.outputs.SELF_CONTAINED }} \
           -o ./publish/
 
     - name: List files in publish directory (debug)
@@ -50,13 +66,10 @@ jobs:
 
     - name: Rename executable
       run: |
-        VERSION="${GITHUB_REF#refs/tags/}"
-        VERSION="${VERSION#v}"
-        
         # For Windows executable
         if [ "${{ matrix.runtime }}" = "win-x64" ]; then
           if [ -f "./publish/RSA.CLI.exe" ]; then
-            cp "./publish/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}.exe"
+            cp "./publish/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.vars.outputs.VERSION }}${{ steps.vars.outputs.SUFFIX }}.exe"
             echo "Copied Windows executable successfully"
           else
             echo "ERROR: Windows executable not found"
@@ -68,7 +81,7 @@ jobs:
         # For Linux executable
         if [ "${{ matrix.runtime }}" = "linux-x64" ]; then
           if [ -f "./publish/RSA.CLI" ]; then
-            cp "./publish/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}"
+            cp "./publish/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.vars.outputs.VERSION }}${{ steps.vars.outputs.SUFFIX }}"
             echo "Copied Linux executable successfully"
           else
             echo "ERROR: Linux executable not found"
@@ -80,7 +93,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: builds-${{ matrix.runtime }}  # Unique name for each matrix job
+        name: build-${{ matrix.runtime }}-${{ matrix.self-contained }}
         path: csrsa-cli-*
         retention-days: 1
   
@@ -91,7 +104,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        pattern: builds-*
+        pattern: build-*
         merge-multiple: true
         path: ./
 
