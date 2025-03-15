@@ -1,0 +1,90 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: ['win-x64', 'linux-x64']
+        include:
+          - runtime: win-x64
+            os: windows
+            extension: .exe
+          - runtime: linux-x64
+            os: linux
+            extension: ''
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Find terminal app project
+      id: find-terminal
+      run: |
+        # Find the terminal project
+        TERMINAL_PROJECT=$(find . -name "*.csproj" -type f -exec grep -l "<OutputType>Exe</OutputType>" {} \; | head -n 1)
+        echo "terminal_project=$TERMINAL_PROJECT" >> $GITHUB_OUTPUT
+        echo "Found terminal project: $TERMINAL_PROJECT"
+
+    - name: Build standalone
+      run: |
+        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r ${{ matrix.runtime }} \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          --self-contained true \
+          -o ./publish/
+
+    - name: Rename executable
+      run: |
+        # Find the executable in the publish directory
+        FILES=$(find ./publish -type f -executable -not -path "*/\.*" -o -name "*.exe")
+        for FILE in $FILES; do
+          # Get just the filename for the destination
+          EXTENSION="${FILE##*.}"
+          if [ "$EXTENSION" = "exe" ]; then
+            EXTENSION="${{ matrix.extension }}"
+          else
+            EXTENSION=""
+          fi
+          
+          # Rename to your desired format
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${VERSION#v}"
+          cp "$FILE" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${VERSION}${EXTENSION}"
+        done
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: builds
+        path: csrsa-cli-*
+        retention-days: 1
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: builds
+        path: ./
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: csrsa-cli-*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
