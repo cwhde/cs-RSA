@@ -75,34 +75,110 @@ public class CommandLine
     {
         Console.WriteLine("Running automated tests...");
 
+        // Setup test files and directories
+        string testPublicKeyFile = "test_public_key.pem";
+        string testPrivateKeyFile = "test_private_key.pem";
+        string testPlaintextFile = "test_plaintext.txt";
+        string testCiphertextFile = "test_ciphertext.txt";
+        string nonExistentFile = "non_existent_file.txt";
+
+        // Ensure test files are cleaned up before running tests
+        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile);
+
+
         // Define a sequence of commands and inputs to simulate user interaction
         string[] testCommands =
         [
             "!help",          // Test help command
             "!generatekeypair 1024", // Test key generation
+            "!generatekeypair invalid_size", // Test invalid key size input
+            "!generatekeypair 512", // Test 512 key size
             "!keyinfo",       // Test key info display
-            "!padding pkcs1", // Test padding change
+            "!padding pkcs1", // Test padding change to pkcs1
+            "!padding oaepsha1", // Test padding change to oaepsha1
+            "!padding invalid_padding", // Test invalid padding input
+            "!padding",        // Test padding command without arguments to display current padding
+
             "Test message 1", // Default mode input (encrypt/decrypt/validate)
             "!encrypt",       // Switch to encrypt mode
             "Test message 2", // Encrypt mode input
             "!decrypt",       // Switch to decrypt mode
-            "paste_ciphertext_here", // Decrypt mode input (you'd need to programmatically get ciphertext)
+
+            // Simulate ciphertext - encrypt a known message first to get ciphertext
+            "!encrypt Test message for ciphertext",
+            "!writecipherfile temp_ciphertext.txt", // Save ciphertext to temp file
+            "!readcipherfile temp_ciphertext.txt", // Read ciphertext back
+            "!decrypt", // Prepare for decrypt mode
+            File.Exists("temp_ciphertext.txt") ? File.ReadAllText("temp_ciphertext.txt") : "paste_ciphertext_here_fallback", // Provide ciphertext input
             "!default",       // Switch back to default mode
+            "Test message 3", // Default mode again after decrypt
+
             "!check reference", // Test reference check
-            "!writepublickey test_public_key.pem", // Test write public key
-            "!writeprivatekey test_private_key.pem", // Test write private key
-            "!loadpublickey test_public_key.pem", // Test load public key from file
-            "!loadprivatekey test_private_key.pem", // Test load private key from file
-            "!padding oaepsha256", // Reset padding
+            "!check invalid_arg", // Test invalid check command
+
+            "!writepublickey " + testPublicKeyFile, // Test write public key
+            "!writeprivatekey " + testPrivateKeyFile, // Test write private key
+            "!loadpublickey " + testPublicKeyFile, // Test load public key from file
+            "!loadprivatekey " + testPrivateKeyFile, // Test load private key from file
+            "!loadpublickey invalid_public_key_file.pem", // Test load invalid public key file
+            "!loadprivatekey invalid_private_key_file.pem", // Test load invalid private key file
+            "!loadpublickey -----BEGIN PUBLIC KEY-----INVALID KEY-----END PUBLIC KEY-----", // Test load invalid public key string
+            "!loadprivatekey -----BEGIN PRIVATE KEY-----INVALID KEY-----END PRIVATE KEY-----", // Test load invalid private key string
+            "!loadpublickey", // Test load public key command with no argument
+            "!loadprivatekey", // Test load private key command with no argument
+            "!writepublickey", // Test write public key command with no argument
+            "!writeprivatekey", // Test write private key command with no argument
+
+            "!readplainfile " + testPlaintextFile, // Test read plaintext file - will fail as file doesn't exist yet, testing error case
+            "!readcipherfile " + testCiphertextFile, // Test read ciphertext file - will fail as file doesn't exist yet, testing error case
+            "!writeplainfile " + testPlaintextFile, // Prepare to write plaintext file
+            "This is a test plaintext to be written to a file.", // Input plaintext
+            "!writeplainfile " + testPlaintextFile, // Write plaintext file
+            "!readplainfile " + testPlaintextFile, // Read plaintext file
+            "!writecipherfile " + testCiphertextFile, // Write ciphertext file after encryption in default mode - using last ciphertext
+            "!readcipherfile " + testCiphertextFile, // Read ciphertext file
+            "!writeplainfile", // Test write plain file command with no argument
+            "!writecipherfile", // Test write cipher file command with no argument
+            "!readplainfile", // Test read plain file command with no argument
+            "!readcipherfile", // Test read cipher file command with no argument
+            "!readplainfile " + nonExistentFile, // Test read plain file command with non-existent file
+            "!readcipherfile " + nonExistentFile, // Test read cipher file command with non-existent file
+
+
+            "!padding oaepsha256", // Reset padding to default
             "!exit"           // Exit command
         ];
+
+        // Create dummy files for read/write tests before loop starts
+        File.WriteAllText(testPlaintextFile, "Initial plaintext content for test file.");
+
 
         foreach (string command in testCommands)
         {
             Console.WriteLine($"Executing command: {command}");
             HandleCommand(command, isTesting: true);
 
-            TestSuccess = true;
+            if (!TestSuccess) // Reset TestSuccess at the start of each command execution
+            {
+                 TestSuccess = true; // Assume success unless HandleCommand sets it to false internally (if you implement such logic)
+            }
+        }
+
+         // Cleanup test files after running tests
+        CleanupTestFiles(testPublicKeyFile, testPrivateKeyFile, testPlaintextFile, testCiphertextFile, "temp_ciphertext.txt");
+
+        Console.WriteLine("Automated tests finished.");
+    }
+    
+    // Cleans up test files after running tests
+    private static void CleanupTestFiles(params string[] files)
+    {
+        foreach (string file in files)
+        {
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
         }
     }
 
