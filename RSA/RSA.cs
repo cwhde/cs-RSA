@@ -10,7 +10,7 @@ namespace RSA;
 
 public class RSA : ICommonRSA
 {
-    private readonly Random _random = new Random();
+    private static readonly RandomNumberGenerator _random = RandomNumberGenerator.Create();
     
     // Method that takes a public key (filepath, PEM or shortened PEM) and a plaintext string and returns the encrypted string
     public string EncryptString(string publicKey, string paddingMode, string plainText)
@@ -217,7 +217,7 @@ public class RSA : ICommonRSA
         return decryptedChunks.SelectMany(x => x).ToArray();
     }
     
-    private byte[] ApplyPadding(byte[] dataBytes, int keySize, string padding)
+    private static byte[] ApplyPadding(byte[] dataBytes, int keySize, string padding)
     {
         return padding.ToLower() switch
         {
@@ -228,7 +228,7 @@ public class RSA : ICommonRSA
         };
     }
 
-    private byte[] ApplyPkcs1Padding(byte[] dataBytes, int keySize)
+    private static byte[] ApplyPkcs1Padding(byte[] dataBytes, int keySize)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         int paddingOverhead = 11;    // Pkcs1 padding is at least 11 bytes long
@@ -250,9 +250,11 @@ public class RSA : ICommonRSA
             paddedBytes[destinationBytesOffset + 1] = 0x02;
             
             int paddingLength = chunkSize - actualDataLength - 3;
+            byte[] randomBytes = new byte[paddingLength];
+            _random.GetNonZeroBytes(randomBytes);
             for (int j = 0; j < paddingLength; j++)
             {
-                paddedBytes[destinationBytesOffset + 2 + j] = (byte)_random.Next(1, 256); // Random padding bytes
+                paddedBytes[destinationBytesOffset + 2 + j] = randomBytes[j]; // Random padding bytes
             }
             
             paddedBytes[destinationBytesOffset + 2 + paddingLength] = 0x00;
@@ -264,7 +266,7 @@ public class RSA : ICommonRSA
         return paddedBytes;
     }
 
-    private byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256)
+    private static byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256)
     {
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         int hashLength = useSHA256 ? 32 : 20;
@@ -302,7 +304,7 @@ public class RSA : ICommonRSA
             
             // Get a seed and create a mask for the DB by applying MGF1 to the seed
             byte[] randomSeedBytes = new byte[hashLength];
-            _random.NextBytes(randomSeedBytes);
+            _random.GetBytes(randomSeedBytes);
             byte[] dbMaskBytes = ApplyMGF1(seed: randomSeedBytes, maskLength: dbLength, useSHA256: useSHA256);
             
             // Mask the DB by XORing it with the mask

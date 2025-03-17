@@ -71,9 +71,57 @@ jobs:
         name: builds
         path: csrsa-cli-*
         retention-days: 1
-  
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Find terminal app project
+      id: find-terminal
+      run: |
+        TERMINAL_PROJECT=$(find . -name "*.csproj" -type f -exec grep -l "<OutputType>Exe</OutputType>" {} \; | head -n 1)
+        echo "terminal_project=$TERMINAL_PROJECT" >> $GITHUB_OUTPUT
+        echo "Found terminal project: $TERMINAL_PROJECT"
+
+    - name: Build standalone for macOS (Apple Silicon)
+      run: |
+        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r osx-silicon-aarch64 \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          --self-contained true \
+          -o ./publish-macos/
+
+    - name: Build dependent (non-standalone) for macOS (Apple Silicon)
+      run: |
+        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r osx-silicon-aarch64 \
+          -p:PublishSingleFile=false \
+          -p:IncludeNativeLibrariesForSelfExtract=false \
+          --self-contained false \
+          -o ./publish-macos-dependent/
+
+    - name: Rename macOS executables
+      run: |
+        # Handle standalone build
+        cp ./publish-macos/csrsa-cli osx-silicon/csrsa-cli-osx-silicon-${GITHUB_REF#refs/tags/v}
+        
+        # Handle dependent build
+        cp ./publish-macos-dependent/csrsa-cli osx-silicon-dependent/csrsa-cli-osx-silicon-dependent-${GITHUB_REF#refs/tags/v}
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: builds
+        path: osx-silicon/
+        retention-days: 1
+
   release:
-    needs: build
+    needs: [build, build-macos]
     runs-on: ubuntu-latest
     steps:
     - name: Download artifacts

@@ -40,12 +40,12 @@ namespace RSA.CLI;
             else
             {
                 // Generate initial key pair on startup
-                (string publicKey, string privateKey) = _rsaImplementation.GenerateKeys(2048);
+                (string publicKey, string privateKey) = _rsaImplementation.GenerateKeys(4096);
                 _activePublicKey = publicKey;
                 _activePrivateKey = privateKey;
 
                 Console.WriteLine("RSA Interactive Tool (RIT) started.");
-                Console.WriteLine("A 2048-bit key pair has been generated. Use !help for commands.");
+                Console.WriteLine("A 4096-bit key pair has been generated. Use !help for commands.");
                 Console.WriteLine(); // Keep new line after startup messages
 
                 while (true)
