@@ -10,116 +10,137 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        runtime: ['win-x64', 'linux-x64']
         include:
           - runtime: win-x64
-            os: windows
+            os: win
             extension: .exe
+            runs-on: ubuntu-latest
           - runtime: linux-x64
             os: linux
             extension: ''
+            runs-on: ubuntu-latest
+
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 9.0.x
 
-    - name: Find terminal app project
-      id: find-terminal
+    - name: Extract version
+      id: version
       run: |
-        # Find the terminal project
-        TERMINAL_PROJECT=$(find . -name "*.csproj" -type f -exec grep -l "<OutputType>Exe</OutputType>" {} \; | head -n 1)
-        echo "terminal_project=$TERMINAL_PROJECT" >> $GITHUB_OUTPUT
-        echo "Found terminal project: $TERMINAL_PROJECT"
-
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION="${VERSION#v}"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+    - name: Build framework-dependent (non-standalone)
+      run: |
+        # Clean publish directory
+        rm -rf ./publish-framework || true
+        mkdir -p ./publish-framework
+        
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          --self-contained false \
+          -o ./publish-framework/
     - name: Build standalone
       run: |
-        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r ${{ matrix.runtime }} \
+        # Clean publish directory
+        rm -rf ./publish-standalone || true
+        mkdir -p ./publish-standalone
+        
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
           -p:PublishSingleFile=true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
           --self-contained true \
-          -o ./publish/
-
-    - name: Rename executable
+          -o ./publish-standalone/
+    - name: Rename executables
       run: |
-        # Find the executable in the publish directory
-        FILES=$(find ./publish -type f -executable -not -path "*/\.*" -o -name "*.exe")
-        for FILE in $FILES; do
-          # Get just the filename for the destination
-          EXTENSION="${FILE##*.}"
-          if [ "$EXTENSION" = "exe" ]; then
-            EXTENSION="${{ matrix.extension }}"
-          else
-            EXTENSION=""
-          fi
-          
-          # Rename to your desired format
-          VERSION="${GITHUB_REF#refs/tags/}"
-          VERSION="${VERSION#v}"
-          cp "$FILE" "csrsa-cli-${{ matrix.runtime }}-${VERSION}${EXTENSION}"
-        done
-
+        # Framework-dependent executable
+        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
+          cp "./publish-framework/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
+        else
+          cp "./publish-framework/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
+        fi
+        
+        # Standalone executable
+        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
+          cp "./publish-standalone/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
+        else
+          cp "./publish-standalone/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
+        fi
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: builds
+        name: build-${{ matrix.runtime }}
         path: csrsa-cli-*
         retention-days: 1
 
   build-macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 9.0.x
 
-    - name: Find terminal app project
-      id: find-terminal
+    - name: Extract version
+      id: version
       run: |
-        TERMINAL_PROJECT=$(find . -name "*.csproj" -type f -exec grep -l "<OutputType>Exe</OutputType>" {} \; | head -n 1)
-        echo "terminal_project=$TERMINAL_PROJECT" >> $GITHUB_OUTPUT
-        echo "Found terminal project: $TERMINAL_PROJECT"
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION="${VERSION#v}"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: Build standalone for macOS (Apple Silicon)
+    - name: Build framework-dependent (non-standalone)
       run: |
-        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r osx-silicon-aarch64 \
+        # Clean publish directory
+        rm -rf ./publish-framework || true
+        mkdir -p ./publish-framework
+        
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r osx-arm64 \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          --self-contained false \
+          -o ./publish-framework/
+
+    - name: Build standalone
+      run: |
+        # Clean publish directory
+        rm -rf ./publish-standalone || true
+        mkdir -p ./publish-standalone
+        
+        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r osx-arm64 \
           -p:PublishSingleFile=true \
           -p:IncludeNativeLibrariesForSelfExtract=true \
           --self-contained true \
-          -o ./publish-macos/
+          -o ./publish-standalone/
 
-    - name: Build dependent (non-standalone) for macOS (Apple Silicon)
+    - name: Rename executables
       run: |
-        dotnet publish ${{ steps.find-terminal.outputs.terminal_project }} -c Release -r osx-silicon-aarch64 \
-          -p:PublishSingleFile=false \
-          -p:IncludeNativeLibrariesForSelfExtract=false \
-          --self-contained false \
-          -o ./publish-macos-dependent/
-
-    - name: Rename macOS executables
-      run: |
-        # Handle standalone build
-        cp ./publish-macos/csrsa-cli osx-silicon/csrsa-cli-osx-silicon-${GITHUB_REF#refs/tags/v}
+        # Framework-dependent executable
+        cp "./publish-framework/RSA.CLI" "csrsa-cli-osx-silicon-$VERSION"
         
-        # Handle dependent build
-        cp ./publish-macos-dependent/csrsa-cli osx-silicon-dependent/csrsa-cli-osx-silicon-dependent-${GITHUB_REF#refs/tags/v}
+        # Standalone executable
+        cp "./publish-standalone/RSA.CLI" "csrsa-cli-osx-silicon-$VERSION-standalone"
+        
+        # Make executables executable
+        chmod +x csrsa-cli-osx-silicon-*
 
-    - name: Upload macOS artifacts
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: builds
-        path: osx-silicon/
+        name: build-osx-silicon
+        path: csrsa-cli-*
         retention-days: 1
-
+  
   release:
     needs: [build, build-macos]
     runs-on: ubuntu-latest
@@ -127,7 +148,8 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: builds
+        pattern: build-*
+        merge-multiple: true
         path: ./
 
     - name: Create Release
