@@ -1,103 +1,29 @@
-﻿name: Build and Release
+name: Delete All Artifacts
 
 on:
-  push:
-    tags:
-      - 'v*'
-
-permissions:
-  contents: write
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
 
 jobs:
-  build:
+  delete-artifacts:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        runtime: ['win-x64', 'linux-x64']
-        include:
-          - runtime: win-x64
-            os: windows
-            extension: .exe
-          - runtime: linux-x64
-            os: linux
-            extension: ''
-
+    permissions:
+      actions: write
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Extract version
-      id: version
-      run: |
-        VERSION="${GITHUB_REF#refs/tags/}"
-        VERSION="${VERSION#v}"
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-    - name: Build framework-dependent (non-standalone)
-      run: |
-        # Clean publish directory
-        rm -rf ./publish-framework || true
-        mkdir -p ./publish-framework
-        
-        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
-          -p:PublishSingleFile=true \
-          -p:IncludeNativeLibrariesForSelfExtract=true \
-          --self-contained false \
-          -o ./publish-framework/
-
-    - name: Build standalone
-      run: |
-        # Clean publish directory
-        rm -rf ./publish-standalone || true
-        mkdir -p ./publish-standalone
-        
-        dotnet publish ./RSA.CLI/RSA.CLI.csproj -c Release -r ${{ matrix.runtime }} \
-          -p:PublishSingleFile=true \
-          -p:IncludeNativeLibrariesForSelfExtract=true \
-          --self-contained true \
-          -o ./publish-standalone/
-
-    - name: Rename executables
-      run: |
-        # Framework-dependent executable
-        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
-          cp "./publish-framework/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}.exe"
-        else
-          cp "./publish-framework/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}"
-        fi
-        
-        # Standalone executable
-        if [ "${{ matrix.runtime }}" = "win-x64" ]; then
-          cp "./publish-standalone/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone.exe"
-        else
-          cp "./publish-standalone/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone"
-        fi
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-${{ matrix.runtime }}
-        path: csrsa-cli-*
-        retention-days: 1
-  
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: build-*
-        merge-multiple: true
-        path: ./
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: csrsa-cli-*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete Artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            for (const artifact of artifacts.data.artifacts) {
+              console.log(`Deleting artifact ${artifact.name}...`);
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id
+              });
+            }
