@@ -64,16 +64,16 @@ jobs:
       run: |
         # Framework-dependent executable
         if [ "${{ matrix.runtime }}" = "win-x64" ]; then
-          cp "./publish-framework/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
+          cp "./publish-framework/RSA.CLI.exe" "csrsa-cli-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
         else
-          cp "./publish-framework/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
+          cp "./publish-framework/RSA.CLI" "csrsa-cli-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}${{ matrix.extension }}"
         fi
         
         # Standalone executable
         if [ "${{ matrix.runtime }}" = "win-x64" ]; then
-          cp "./publish-standalone/RSA.CLI.exe" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
+          cp "./publish-standalone/RSA.CLI.exe" "csrsa-cli-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
         else
-          cp "./publish-standalone/RSA.CLI" "csrsa-cli-${{ matrix.os }}-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
+          cp "./publish-standalone/RSA.CLI" "csrsa-cli-${{ matrix.runtime }}-${{ steps.version.outputs.VERSION }}-standalone${{ matrix.extension }}"
         fi
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
