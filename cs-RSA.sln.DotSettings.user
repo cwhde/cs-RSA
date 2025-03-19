@@ -7,7 +7,24 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=69E3EC28_002D9C44_002D4220_002DACEE_002D5FE1CF7A4C42/@EntryIndexedValue">E56C5D00-9269-48D3-AC8A-C0CF7FD60592</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=6CD39657_002D12AF_002D456D_002DA7E7_002D65106279F02E/@EntryIndexedValue">ReferenceRSA.Tests</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d027b926_002D8256_002D4fc4_002D8f60_002D601fb40bbfd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=10f3e468_002D8ebc_002D4d90_002D980c_002D37791e2f0eeb/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::csRSA.Tests.RSATest.GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3364e7df_002Df20f_002D487b_002D82ad_002Dfad6c0538bf0/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::csRSA.Tests.RSATest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::csRSA.Tests.ReferenceRSATest.GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b2bbe27c_002Da36a_002D49c3_002D95b5_002Df24073568e90/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::csRSA.Tests.ReferenceRSATest.GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E56C5D00-9269-48D3-AC8A-C0CF7FD60592::net9.0::csRSA.Tests.RSATest.GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d027b926_002D8256_002D4fc4_002D8f60_002D601fb40bbfd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="GenerateKeys_ShouldNotErrorAndReturnWorkingKeys" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=bitperbyte/@EntryIndexedValue">True</s:Boolean>

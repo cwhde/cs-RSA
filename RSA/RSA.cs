@@ -268,6 +268,13 @@ public class RSA : ICommonRSA
 
     private static byte[] ApplyOaepPadding(byte[] dataBytes, int keySize, bool useSHA256)
     {
+        // Check if the key size is large enough for OAEP
+        int maxKeySize = useSHA256 ? 1024 : 512;
+        if (keySize < maxKeySize)
+        {
+            throw new ArgumentException("Key size too small for OAEP padding (minimum 1024 bits for SHA256, 512 bits for SHA1)");
+        }
+        
         int chunkSize = keySize / 8; // Chunk size is the key's size in bytes
         int hashLength = useSHA256 ? 32 : 20;
         int dbLength = chunkSize - hashLength - 1;

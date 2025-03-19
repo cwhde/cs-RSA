@@ -2,7 +2,7 @@ namespace RSA.commons;
 
 public interface ICommonRSAUnitTest
 {
-    void GenerateKeys_ShouldNotErrorAndReturnWorkingKeys();
+    void GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes();
     void EncryptString_ShouldRunWithProvenKeysOfMultipleFormats();
     void DecryptString_ShouldOutputCorrectTextWithProvenKeysOfMultipleFormats();
     void EncryptString_ShouldThrowExceptionWithInvalidPadding();
