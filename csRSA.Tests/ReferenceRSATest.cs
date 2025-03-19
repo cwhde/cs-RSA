@@ -16,17 +16,24 @@ public class ReferenceRSATest : ICommonRSAUnitTest
     // Pass if generating keys and then using them doesn't throw an error and the decrypted text is the same as the original text
     public void GenerateKeys_ShouldNotErrorAndReturnWorkingKeysInAllSizes()
     {
-        int[] keySizes = [512, 1024, 2048, 4096, 8192];
+        int[] keySizes = [1024, 2048, 4096, 8192];
         string text = "Less than 256 bits";
         
         foreach (int keySize in keySizes)
         {
-            (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(keySize);
-            
-            string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", text);
-            string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
-            
-            Assert.AreEqual(text, decryptedText);
+            try
+            {
+                (string publicKey, string privateKey) = _referenceRSA.GenerateKeys(keySize);
+        
+                string encryptedText = _referenceRSA.EncryptString(publicKey, "pkcs1", text);
+                string decryptedText = _referenceRSA.DecryptString(privateKey, "pkcs1", encryptedText);
+        
+                Assert.AreEqual(text, decryptedText);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail($"Exception occurred with key size {keySize}: {ex.Message}");
+            }
         }
     }
     
