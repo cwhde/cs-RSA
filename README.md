@@ -44,3 +44,10 @@ A custom implementation of RSA encryption in C\# created as part of my Matura-Pr
 * **Validating Results:**
     * Use the included ReferenceRSA project
     * [BTool](https://www.btool.cn/en/rsa) - Online tool for RSA operations and validation
+
+
+## Sources
+***
+
+This repository is part of the learning process for my MA (Maturaarbeit), but it is **NOT** an official part of the MA itself.
+The sources used for this project are a mix of the academic literature cited in the MA and also various additional resources (e.g., official documentation, tutorials, and community forums) that were consulted during development.
